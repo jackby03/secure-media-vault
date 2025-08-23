@@ -22,16 +22,27 @@ repositories {
 dependencies {
     // --- Spring Boot Core ---
     implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.8.1")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    // --- Utils ---
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    // --- Testing ---
+    testImplementation("org.springframework.boot:spring-boot-starter-test") { exclude(group = "org.junit.vintage") }
+    testImplementation("io.projectreactor:reactor-test")
+    testImplementation("io.mockk:mockk:1.13.12")
+    testImplementation("org.testcontainers:junit-jupiter")
+    testImplementation("org.testcontainers:postgresql")
+    testImplementation("org.testcontainers:minio")
     // --- Base de datos (PostgreSQL + R2DBC) ---
     implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
-    implementation("org.postgresql:r2dbc-postgresql:1.0.5.RELEASE")
+    implementation("org.postgresql:r2dbc-postgresql")
     runtimeOnly("org.postgresql:postgresql")
+    // --- Logs ---
+    implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 }
 
 kotlin {

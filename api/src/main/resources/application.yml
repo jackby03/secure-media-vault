@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: secure-media-vault
+  main:
+    web-application-type: reactive
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/management
+    username: postgres
+    password: postgres
+  data:
+    redis:
+      host: redis
+      port: 6379
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: guest
+    password: guest
+
+server:
+  port: 8080
+
+minio:
+  url: http://minio:9000
+  access-key: minioadmin
+  secret-key: minioadmin
+
+#logging:
+#  level:
+#    org:
+#      springframework:
+#        r2dbc:
+#          core: debug
+#        data:
+#          r2dbc: debug
