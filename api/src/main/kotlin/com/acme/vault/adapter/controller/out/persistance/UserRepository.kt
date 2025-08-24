@@ -9,33 +9,31 @@ import java.util.UUID
 
 @Repository
 class UserRepository(
-    private val encoder: PasswordEncoder
 ) : IUserRepository {
 
     private val users = mutableListOf<User>(
         User(
             id = UUID.randomUUID(),
             email = "email-sample1@mail.com",
-            password = encoder.encode("password-sample1"),
+            password = "password-sample1",
             role = Role.ADMIN
         ),
         User(
             id = UUID.randomUUID(),
             email = "email-sample2@mail.com",
-            password = encoder.encode("password-sample2"),
+            password = "password-sample2",
             role = Role.EDITOR
         ),
         User(
             id = UUID.randomUUID(),
             email = "email-sample3@mail.com",
-            password = encoder.encode("password-sample3"),
+            password = "password-sample3",
             role = Role.VIEWER
         )
     )
 
     override fun save(user: User): Boolean {
-        val updated = user.copy(password = encoder.encode(user.password))
-        return users.add(updated)
+        return users.add(user)
     }
 
     override fun findByEmail(email: String): User? =
