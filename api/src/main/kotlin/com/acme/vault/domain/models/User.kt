@@ -10,7 +10,7 @@ data class User(
     @Id val id: UUID? = null,
     val email: String,
     val password: String,
-    val roles: Set<Role> = setOf(Role.VIEWER),
+    val role: Role = Role.VIEWER,
     val createdAt: LocalDateTime = LocalDateTime.now(),
     val updatedAt: LocalDateTime = LocalDateTime.now(),
     val enabled: Boolean = true
