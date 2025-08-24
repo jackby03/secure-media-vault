@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service
 typealias ApplicationUser = com.acme.vault.domain.models.User
 
 @Service
-class UserDetailsServiceImpl(
+class CustomUserDetailsService(
     private val userRepository: UserRepository
 ): UserDetailsService {
     override fun loadUserByUsername(username: String): UserDetails? =

@@ -3,41 +3,46 @@ package com.acme.vault.adapter.controller.out.persistance
 import com.acme.vault.domain.models.Role
 import com.acme.vault.domain.models.User
 import com.acme.vault.domain.repository.IUserRepository
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-class UserRepository : IUserRepository {
+class UserRepository(
+    private val encoder: PasswordEncoder
+) : IUserRepository {
 
     private val users = mutableListOf<User>(
         User(
             id = UUID.randomUUID(),
             email = "email-sample1@mail.com",
-            password = "password-sample1",
+            password = encoder.encode("password-sample1"),
             role = Role.USER
         ),
         User(
             id = UUID.randomUUID(),
             email = "email-sample2@mail.com",
-            password = "password-sample2",
+            password = encoder.encode("password-sample2"),
             role = Role.ADMIN
         ),
         User(
             id = UUID.randomUUID(),
             email = "email-sample3@mail.com",
-            password = "password-sample3",
+            password = encoder.encode("password-sample3"),
             role = Role.USER
         ),
         User(
             id = UUID.randomUUID(),
             email = "email-sample4@mail.com",
-            password = "password-sample4",
+            password = encoder.encode("password-sample4"),
             role = Role.USER
         )
     )
 
-    override fun save(user: User): Boolean =
-        users.add(user)
+    override fun save(user: User): Boolean {
+        val updated = user.copy(password = encoder.encode(user.password))
+        return users.add(updated)
+    }
 
     override fun findByEmail(email: String): User? =
         users
