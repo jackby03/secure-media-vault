@@ -3,6 +3,7 @@ package com.acme.vault.application.service
 import com.acme.vault.adapter.out.persistance.UserRepository
 import com.acme.vault.domain.models.User
 import com.acme.vault.domain.service.IUserService
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -10,7 +11,8 @@ import java.util.UUID
 
 @Service
 class UserServiceImpl(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val passwordEncoder: PasswordEncoder
 ) : IUserService {
     override fun createUser(user: User): Mono<User?> {
         println("=== USER SERVICE: createUser() called for email: ${user.email} ===")
@@ -22,7 +24,12 @@ class UserServiceImpl(
             .switchIfEmpty(
                 Mono.defer {
                     println("Creating new user with email: ${user.email}")
-                    userRepository.save(user)
+                    val userWithHashedPassword = user.copy(
+                        password = passwordEncoder.encode(user.password)
+                    )
+                    println("Password hashed for user: ${user.email}")
+                    
+                    userRepository.save(userWithHashedPassword)
                         .map { savedUser ->
                             println("User created successfully: ${savedUser.id}")
                             savedUser as User?

@@ -7,5 +7,5 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 
 @Configuration
 @EnableConfigurationProperties(JwtProperties::class)
-@EnableReactiveMethodSecurity  // Habilita @PreAuthorize en métodos reactivos
+@EnableReactiveMethodSecurity
 class ApplicationConfig

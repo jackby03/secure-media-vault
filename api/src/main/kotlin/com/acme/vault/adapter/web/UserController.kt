@@ -6,6 +6,8 @@ import com.acme.vault.application.service.UserServiceImpl
 import com.acme.vault.domain.models.Role
 import com.acme.vault.domain.models.User
 import org.springframework.http.HttpStatus
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -24,15 +26,20 @@ class UserController(
     private val userService: UserServiceImpl
 ) {
     @PostMapping
-    fun create(@RequestBody userRequest: UserRequest): Mono<UserResponse> =
-        userService.createUser(
-            user = userRequest.toModel()
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
+    fun create(@RequestBody userRequest: UserRequest, authentication: Authentication): Mono<UserResponse> {
+        val currentUserRole = getUserRoleFromAuthentication(authentication)
+        val targetRole = determineTargetRole(userRequest.role, currentUserRole)
+        
+        return userService.createUser(
+            user = userRequest.toModel(targetRole)
         ).map { user ->
             user?.toResponse() ?: throw ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
                 "User not created"
             )
         }
+    }
 
     @GetMapping
     fun findAll(): Flux<UserResponse> {
@@ -55,10 +62,13 @@ class UserController(
             }
 
     @DeleteMapping("/{uuid}")
-    fun deleteByUUID(@PathVariable uuid: UUID): Mono<Void> =
-        userService.deleteByUUID(uuid)
-            .flatMap { isDeleted ->
-                if (!isDeleted) {
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
+    fun deleteByUUID(@PathVariable uuid: UUID, authentication: Authentication): Mono<Void> {
+        val currentUserRole = getUserRoleFromAuthentication(authentication)
+        
+        return userService.findByUUID(uuid)
+            .flatMap { userToDelete ->
+                if (userToDelete == null) {
                     Mono.error(
                         ResponseStatusException(
                             HttpStatus.NOT_FOUND,
@@ -66,15 +76,38 @@ class UserController(
                         )
                     )
                 } else {
-                    Mono.empty()
+                    // Validar que EDITOR no puede eliminar ADMIN
+                    if (currentUserRole == Role.EDITOR && userToDelete.role == Role.ADMIN) {
+                        Mono.error(
+                            ResponseStatusException(
+                                HttpStatus.FORBIDDEN,
+                                "Editors cannot delete admin users"
+                            )
+                        )
+                    } else {
+                        userService.deleteByUUID(uuid)
+                            .flatMap { isDeleted ->
+                                if (!isDeleted) {
+                                    Mono.error(
+                                        ResponseStatusException(
+                                            HttpStatus.NOT_FOUND,
+                                            "User not found"
+                                        )
+                                    )
+                                } else {
+                                    Mono.empty()
+                                }
+                            }
+                    }
                 }
             }
+    }
 
-    private fun UserRequest.toModel(): User =
+    private fun UserRequest.toModel(role: Role): User =
         User(
             email = this.email,
             password = this.password,
-            role = Role.VIEWER
+            role = role
         )
 
     private fun User.toResponse(): UserResponse =
@@ -85,4 +118,39 @@ class UserController(
             enabled = this.enabled,
             createdAt = this.createdAt
         )
+
+    private fun getUserRoleFromAuthentication(authentication: Authentication): Role {
+        val authorities = authentication.authorities
+        return when {
+            authorities.any { it.authority == "ROLE_ADMIN" } -> Role.ADMIN
+            authorities.any { it.authority == "ROLE_EDITOR" } -> Role.EDITOR
+            authorities.any { it.authority == "ROLE_VIEWER" } -> Role.VIEWER
+            else -> Role.VIEWER
+        }
+    }
+
+    private fun determineTargetRole(requestedRole: Role?, currentUserRole: Role): Role {
+        return when (currentUserRole) {
+            Role.ADMIN -> {
+                // ADMIN puede crear usuarios con cualquier rol
+                requestedRole ?: Role.VIEWER
+            }
+            Role.EDITOR -> {
+                when (requestedRole) {
+                    Role.ADMIN -> throw ResponseStatusException(
+                        HttpStatus.FORBIDDEN,
+                        "Editors cannot create admin users"
+                    )
+                    Role.EDITOR, Role.VIEWER -> requestedRole
+                    null -> Role.VIEWER // Default para EDITOR
+                }
+            }
+            Role.VIEWER -> {
+                throw ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Viewers cannot create users"
+                )
+            }
+        }
+    }
 }
