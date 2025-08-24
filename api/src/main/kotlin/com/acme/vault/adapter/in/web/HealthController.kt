@@ -1,4 +1,4 @@
-package com.acme.vault.adapter.controller.`in`.web
+package com.acme.vault.adapter.`in`.web
 
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController

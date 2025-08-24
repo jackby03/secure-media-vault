@@ -1,4 +1,4 @@
-package com.acme.vault.adapter.controller.out.persistance
+package com.acme.vault.adapter.out.persistance
 
 import com.acme.vault.domain.models.Role
 import com.acme.vault.domain.models.User

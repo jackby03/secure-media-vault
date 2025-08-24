@@ -1,4 +1,4 @@
-package com.acme.vault.adapter.controller.`in`.web.dto
+package com.acme.vault.adapter.`in`.web.dto
 
 data class UserRequest(
     val email: String,
