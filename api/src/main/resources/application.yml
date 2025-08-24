@@ -25,11 +25,15 @@ minio:
   access-key: minioadmin
   secret-key: minioadmin
 
-#logging:
-#  level:
-#    org:
-#      springframework:
-#        r2dbc:
-#          core: debug
-#        data:
-#          r2dbc: debug
+logging:
+  level:
+    org:
+      springframework:
+        r2dbc:
+          core: debug
+        data:
+          r2dbc: debug
+jwt:
+  key: "tu-clave-secreta-aqui-debe-ser-muy-larga-para-ser-segura"
+  access-token-expiration: 3600000  # 1 hora
+  refresh-token-expiration: 86400000  # 24 horas
