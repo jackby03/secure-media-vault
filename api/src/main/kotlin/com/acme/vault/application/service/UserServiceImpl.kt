@@ -1,6 +1,7 @@
 package com.acme.vault.application.service
 
 import com.acme.vault.adapter.out.persistance.UserRepository
+import com.acme.vault.domain.models.Role
 import com.acme.vault.domain.models.User
 import com.acme.vault.domain.service.IUserService
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -56,4 +57,52 @@ class UserServiceImpl(
         userRepository.deleteByUUID(uuid)
             .thenReturn(true)
             .onErrorReturn(false)
+
+    // === BUSINESS LOGIC METHODS ===
+    
+    override fun createUserWithRoleValidation(user: User, requestedRole: Role?, currentUserRole: Role): Mono<User?> {
+        val targetRole = determineTargetRole(requestedRole, currentUserRole)
+        val userWithTargetRole = user.copy(role = targetRole)
+        return createUser(userWithTargetRole)
+    }
+    
+    override fun deleteUserWithRoleValidation(uuid: UUID, currentUserRole: Role): Mono<Boolean> {
+        return findByUUID(uuid)
+            .flatMap { userToDelete ->
+                if (userToDelete == null) {
+                    Mono.error(IllegalArgumentException("User not found"))
+                } else {
+                    validateDeletePermission(currentUserRole, userToDelete.role)
+                        .then(deleteByUUID(uuid))
+                }
+            }
+    }
+    
+    // === PRIVATE HELPER METHODS ===
+    
+    private fun determineTargetRole(requestedRole: Role?, currentUserRole: Role): Role {
+        return when (currentUserRole) {
+            Role.ADMIN -> {
+                requestedRole ?: Role.VIEWER
+            }
+            Role.EDITOR -> {
+                when (requestedRole) {
+                    Role.ADMIN -> throw IllegalArgumentException("Editors cannot create admin users")
+                    Role.EDITOR, Role.VIEWER -> requestedRole
+                    null -> Role.VIEWER
+                }
+            }
+            Role.VIEWER -> {
+                throw IllegalArgumentException("Viewers cannot create users")
+            }
+        }
+    }
+    
+    private fun validateDeletePermission(currentUserRole: Role, targetUserRole: Role): Mono<Void> {
+        return if (currentUserRole == Role.EDITOR && targetUserRole == Role.ADMIN) {
+            Mono.error(IllegalArgumentException("Editors cannot delete admin users"))
+        } else {
+            Mono.empty()
+        }
+    }
 }
