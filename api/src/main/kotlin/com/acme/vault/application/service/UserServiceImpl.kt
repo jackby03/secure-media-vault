@@ -13,16 +13,25 @@ class UserServiceImpl(
     private val userRepository: UserRepository
 ) : IUserService {
     override fun createUser(user: User): Mono<User?> {
-        val isSaved = userRepository.save(user)
-        return if (isSaved) Mono.just(user) else Mono.empty()
+        return userRepository.findByEmail(user.email)
+            .flatMap<User?> {
+                Mono.empty()
+            }
+            .switchIfEmpty(
+                userRepository.save(user).map { it as User? }
+            )
     }
 
     override fun findByUUID(uuid: UUID): Mono<User?> =
-        Mono.justOrEmpty(userRepository.findByUUID(uuid))
+        userRepository.findById(uuid)
+            .map { it as User? }
+            .switchIfEmpty(Mono.empty())
 
     override fun findByAll(): Flux<User> =
-        Flux.fromIterable(userRepository.findAll())
+        userRepository.findAll()
 
     override fun deleteByUUID(uuid: UUID): Mono<Boolean> =
-        Mono.just(userRepository.deleteByUUID(uuid))
+        userRepository.deleteByUUID(uuid)
+            .thenReturn(true)
+            .onErrorReturn(false)
 }

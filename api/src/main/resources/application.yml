@@ -7,6 +7,13 @@ spring:
     url: r2dbc:postgresql://localhost:5432/management
     username: postgres
     password: postgres
+  # Configuración de Flyway para migraciones
+  flyway:
+    url: jdbc:postgresql://localhost:5432/management
+    user: postgres
+    password: postgres
+    locations: classpath:db/migration
+    baseline-on-migrate: true
   data:
     redis:
       host: redis

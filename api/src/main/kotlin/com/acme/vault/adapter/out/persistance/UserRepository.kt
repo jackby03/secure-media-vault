@@ -1,56 +1,28 @@
 package com.acme.vault.adapter.out.persistance
 
-import com.acme.vault.domain.models.Role
 import com.acme.vault.domain.models.User
-import com.acme.vault.domain.repository.IUserRepository
-import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.data.r2dbc.repository.Query
+import org.springframework.data.repository.reactive.ReactiveCrudRepository
 import org.springframework.stereotype.Repository
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import java.util.UUID
 
 @Repository
-class UserRepository(
-) : IUserRepository {
+interface UserRepository : ReactiveCrudRepository<User, UUID> {
 
-    private val users = mutableListOf<User>(
-        User(
-            id = UUID.randomUUID(),
-            email = "email-sample1@mail.com",
-            password = "password-sample1",
-            role = Role.ADMIN
-        ),
-        User(
-            id = UUID.randomUUID(),
-            email = "email-sample2@mail.com",
-            password = "password-sample2",
-            role = Role.EDITOR
-        ),
-        User(
-            id = UUID.randomUUID(),
-            email = "email-sample3@mail.com",
-            password = "password-sample3",
-            role = Role.VIEWER
-        )
-    )
+    @Query("SELECT * FROM users WHERE email = :email")
+    fun findByEmail(email: String): Mono<User>
 
-    override fun save(user: User): Boolean {
-        return users.add(user)
-    }
+    @Query("SELECT * FROM users WHERE enabled = true")
+    fun findAllEnabled(): Flux<User>
 
-    override fun findByEmail(email: String): User? =
-        users
-            .firstOrNull { it.email == email }
+    @Query("SELECT * FROM users WHERE role = :role")
+    fun findByRole(role: String): Flux<User>
 
-    override fun findAll(): List<User> =
-        users
+    @Query("UPDATE users SET enabled = false WHERE id = :id")
+    fun softDeleteById(id: UUID): Mono<Void>
 
-    override fun findByUUID(uuid: UUID): User? =
-        users
-            .firstOrNull { it.id == uuid }
-
-    override fun deleteByUUID(uuid: UUID): Boolean {
-        val foundUser = findByUUID(uuid)
-        return foundUser?.let { users.remove(it) }
-            ?: false
-    }
-
+    @Query("DELETE FROM users WHERE id = :id")
+    fun deleteByUUID(uuid: UUID): Mono<Void>
 }
