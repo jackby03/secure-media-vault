@@ -22,10 +22,11 @@ class UserServiceImpl(
             )
     }
 
-    override fun findByUUID(uuid: UUID): Mono<User?> =
-        userRepository.findById(uuid)
+    override fun findByUUID(uuid: UUID): Mono<User?> {
+        return userRepository.findById(uuid)
             .map { it as User? }
             .switchIfEmpty(Mono.empty())
+    }
 
     override fun findByAll(): Flux<User> =
         userRepository.findAll()

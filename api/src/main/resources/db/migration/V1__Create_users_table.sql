@@ -17,5 +17,5 @@ CREATE INDEX idx_users_role ON users(role);
 
 -- Insert default admin user
 INSERT INTO users (email, password, role, enabled) VALUES
-('admin@vault.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewfWuVK1AmKFG7tS', 'ADMIN', true)
+('admin@vault.com', '$2a$12$rbAiCT//8lGo.nl6vJ/hO.68H5mEk3kpBVjT7Xbbh7dMsI7gRvjG2', 'ADMIN', true)
 ON CONFLICT (email) DO NOTHING;

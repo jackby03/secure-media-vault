@@ -1,7 +1,5 @@
-package com.acme.vault.adapter.`in`.web
-
-import com.acme.vault.adapter.`in`.web.dto.UserRequest
-import com.acme.vault.adapter.`in`.web.dto.UserResponse
+import com.acme.vault.adapter.web.dto.UserRequest
+import com.acme.vault.adapter.web.dto.UserResponse
 import com.acme.vault.application.service.UserServiceImpl
 import com.acme.vault.domain.models.Role
 import com.acme.vault.domain.models.User
@@ -54,10 +52,12 @@ class UserController(
         userService.deleteByUUID(uuid)
             .flatMap { isDeleted ->
                 if (!isDeleted) {
-                    Mono.error(ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "User not found"
-                    ))
+                    Mono.error(
+                        ResponseStatusException(
+                            HttpStatus.NOT_FOUND,
+                            "User not found"
+                        )
+                    )
                 } else {
                     Mono.empty()
                 }
@@ -73,7 +73,10 @@ class UserController(
 
     private fun User.toResponse(): UserResponse =
         UserResponse(
-            uuid = this.id,
-            email = this.email
+            id = this.id,
+            email = this.email,
+            role = this.role.name,
+            enabled = this.enabled,
+            createdAt = this.createdAt
         )
 }
