@@ -1,4 +1,4 @@
-package com.acme.vault.config
+package com.acme.vault.config.properties
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 

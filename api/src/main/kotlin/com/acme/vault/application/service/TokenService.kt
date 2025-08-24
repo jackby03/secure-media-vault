@@ -1,6 +1,6 @@
 package com.acme.vault.application.service
 
-import com.acme.vault.config.JwtProperties
+import com.acme.vault.config.properties.JwtProperties
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
