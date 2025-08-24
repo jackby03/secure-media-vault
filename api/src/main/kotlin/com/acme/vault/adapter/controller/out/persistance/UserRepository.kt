@@ -17,25 +17,19 @@ class UserRepository(
             id = UUID.randomUUID(),
             email = "email-sample1@mail.com",
             password = encoder.encode("password-sample1"),
-            role = Role.USER
+            role = Role.ADMIN
         ),
         User(
             id = UUID.randomUUID(),
             email = "email-sample2@mail.com",
             password = encoder.encode("password-sample2"),
-            role = Role.ADMIN
+            role = Role.EDITOR
         ),
         User(
             id = UUID.randomUUID(),
             email = "email-sample3@mail.com",
             password = encoder.encode("password-sample3"),
-            role = Role.USER
-        ),
-        User(
-            id = UUID.randomUUID(),
-            email = "email-sample4@mail.com",
-            password = encoder.encode("password-sample4"),
-            role = Role.USER
+            role = Role.VIEWER
         )
     )
 
