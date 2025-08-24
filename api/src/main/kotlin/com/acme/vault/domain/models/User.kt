@@ -7,7 +7,7 @@ import java.util.UUID
 
 @Table("users")
 data class User(
-    @Id val id: UUID? = null,
+    @Id val id: UUID,
     val email: String,
     val password: String,
     val role: Role = Role.VIEWER,

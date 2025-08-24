@@ -62,7 +62,7 @@ class UserController(
             id = UUID.randomUUID(),
             email = this.email,
             password = this.password,
-            role = Role.USER
+            role = Role.VIEWER
         )
 
     private fun User.toResponse(): UserResponse =
