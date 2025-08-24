@@ -28,8 +28,13 @@ class UserServiceImpl(
             .switchIfEmpty(Mono.empty())
     }
 
-    override fun findByAll(): Flux<User> =
-        userRepository.findAll()
+    override fun findByAll(): Flux<User> {
+        println("=== USER SERVICE: findByAll() called ===")
+        return userRepository.findAll()
+            .doOnNext { user -> println("Repository returned user: ${user.email}") }
+            .doOnComplete { println("Repository findAll completed") }
+            .doOnError { error -> println("Repository findAll error: ${error.message}") }
+    }
 
     override fun deleteByUUID(uuid: UUID): Mono<Boolean> =
         userRepository.deleteByUUID(uuid)

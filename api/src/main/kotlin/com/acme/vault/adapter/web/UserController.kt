@@ -1,3 +1,5 @@
+package com.acme.vault.adapter.web
+
 import com.acme.vault.adapter.web.dto.UserRequest
 import com.acme.vault.adapter.web.dto.UserResponse
 import com.acme.vault.application.service.UserServiceImpl
@@ -33,9 +35,14 @@ class UserController(
         }
 
     @GetMapping
-    fun findAll(): Flux<UserResponse> =
-        userService.findByAll()
+    fun findAll(): Flux<UserResponse> {
+        println("=== USER CONTROLLER WEB: findAll() called ===")
+        return userService.findByAll()
+            .doOnNext { user -> println("Found user in web controller: ${user.email}") }
             .map { it.toResponse() }
+            .doOnComplete { println("Completed findAll in web controller") }
+            .doOnError { error -> println("Error in findAll web controller: ${error.message}") }
+    }
 
     @GetMapping("/{uuid}")
     fun findByUUID(@PathVariable uuid: UUID): Mono<UserResponse> =

@@ -46,10 +46,10 @@ dependencies {
     implementation("org.flywaydb:flyway-core:10.21.0")
     implementation("org.flywaydb:flyway-database-postgresql:10.21.0")
     // --- Security ---
+    implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("io.jsonwebtoken:jjwt-api:0.13.0")
     implementation("io.jsonwebtoken:jjwt-impl:0.13.0")
     implementation("io.jsonwebtoken:jjwt-jackson:0.13.0")
-    implementation("org.springframework.boot:spring-boot-starter-security:4.0.0-M1")
     // --- Logs ---
     implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 }
