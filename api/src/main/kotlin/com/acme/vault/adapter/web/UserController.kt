@@ -72,7 +72,6 @@ class UserController(
 
     private fun UserRequest.toModel(): User =
         User(
-            id = UUID.randomUUID(),
             email = this.email,
             password = this.password,
             role = Role.VIEWER
@@ -80,7 +79,7 @@ class UserController(
 
     private fun User.toResponse(): UserResponse =
         UserResponse(
-            id = this.id,
+            id = this.id ?: UUID.randomUUID(), // Fallback si por algún motivo es null
             email = this.email,
             role = this.role.name,
             enabled = this.enabled,

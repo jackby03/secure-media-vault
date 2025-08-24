@@ -13,12 +13,21 @@ class UserServiceImpl(
     private val userRepository: UserRepository
 ) : IUserService {
     override fun createUser(user: User): Mono<User?> {
+        println("=== USER SERVICE: createUser() called for email: ${user.email} ===")
         return userRepository.findByEmail(user.email)
-            .flatMap<User?> {
-                Mono.empty()
+            .flatMap<User?> { existingUser ->
+                println("User already exists: ${existingUser.email}")
+                Mono.error(RuntimeException("User with email ${user.email} already exists"))
             }
             .switchIfEmpty(
-                userRepository.save(user).map { it as User? }
+                Mono.defer {
+                    println("Creating new user with email: ${user.email}")
+                    userRepository.save(user)
+                        .map { savedUser ->
+                            println("User created successfully: ${savedUser.id}")
+                            savedUser as User?
+                        }
+                }
             )
     }
 
