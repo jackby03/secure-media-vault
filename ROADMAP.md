@@ -33,7 +33,7 @@
 ## 🎯 FASE 2: GESTIÓN DE ARCHIVOS (Prioridad Alta)
 
 ### 📁 2.1 Modelo de Datos para Archivos
-- [ ] **Crear entidad File** (file_metadata tabla)
+- [x] **Crear entidad File** (file_metadata tabla)
   ```sql
   - id: UUID PRIMARY KEY
   - name: VARCHAR(255) NOT NULL
@@ -50,10 +50,10 @@
   - updated_at: TIMESTAMP NOT NULL
   - processed_at: TIMESTAMP
   ```
-- [ ] **Crear enum FileStatus** (PENDING, PROCESSING, READY, FAILED)
-- [ ] **Crear migración V2__Create_files_table.sql**
-- [ ] **Crear FileRepository con R2DBC**
-- [ ] **Crear IFileService interface**
+- [x] **Crear enum FileStatus** (PENDING, PROCESSING, READY, FAILED)
+- [x] **Crear migración V2__Create_files_table.sql**
+- [x] **Crear FileRepository con R2DBC**
+- [x] **Crear IFileService interface**
 
 ### 🔌 2.2 Integración con MinIO
 - [ ] **Crear configuración MinIO**
