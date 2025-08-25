@@ -50,6 +50,8 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-api:0.13.0")
     implementation("io.jsonwebtoken:jjwt-impl:0.13.0")
     implementation("io.jsonwebtoken:jjwt-jackson:0.13.0")
+    // --- Storage ---
+    implementation("io.minio:minio:8.5.7")
     // --- Logs ---
     implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 }

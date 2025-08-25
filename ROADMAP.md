@@ -56,17 +56,17 @@
 - [x] **Crear IFileService interface**
 
 ### 🔌 2.2 Integración con MinIO
-- [ ] **Crear configuración MinIO**
-  - [ ] MinioProperties class
-  - [ ] MinioConfig class con MinioClient bean
-- [ ] **Crear MinioService**
-  - [ ] uploadFile(InputStream, String, String): Mono<String>
-  - [ ] downloadFile(String): Mono<InputStream>
-  - [ ] deleteFile(String): Mono<Boolean>
-  - [ ] generatePresignedUrl(String, Duration): Mono<String>
-- [ ] **Manejo de buckets**
-  - [ ] Crear bucket automáticamente si no existe
-  - [ ] Configurar políticas de acceso
+- [x] **Crear configuración MinIO**
+  - [x] MinioProperties class
+  - [x] MinioConfig class con MinioClient bean
+- [x] **Crear MinioService**
+  - [x] uploadFile(InputStream, String, String): Mono<String>
+  - [x] downloadFile(String): Mono<InputStream>
+  - [x] deleteFile(String): Mono<Boolean>
+  - [x] generatePresignedUrl(String, Duration): Mono<String>
+- [x] **Manejo de buckets**
+  - [x] Crear bucket automáticamente si no existe
+  - [x] Configurar políticas de acceso
 
 ### 📤 2.3 API de Upload de Archivos
 - [ ] **Crear FileController**
