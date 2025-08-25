@@ -24,8 +24,14 @@ class MinioService(
     }
 
     init {
-        // Crear bucket si no existe al inicializar el servicio
-        createBucketIfNotExists().subscribe()
+        // Crear bucket si no existe al inicializar el servicio (de forma segura)
+        createBucketIfNotExists()
+            .doOnError { error -> 
+                println("Warning: Could not initialize MinIO bucket during startup: ${error.message}")
+                println("Bucket will be created on first file operation if MinIO becomes available")
+            }
+            .onErrorComplete() // Evita que el error propagate y rompa la inicialización
+            .subscribe()
     }
 
     /**
@@ -69,33 +75,45 @@ class MinioService(
         contentType: String,
         size: Long = -1
     ): Mono<String> {
-        return Mono.fromCallable {
-            try {
-                println("=== MINIO SERVICE: Uploading file: $objectName ===")
-                
-                val putObjectArgs = PutObjectArgs.builder()
-                    .bucket(minioProperties.bucketName)
-                    .`object`(objectName)
-                    .stream(inputStream, size, -1)
-                    .contentType(contentType)
-                    .build()
-
-                val result = minioClient.putObject(putObjectArgs)
-                println("File uploaded successfully: $objectName, ETag: ${result.etag()}")
-                
-                objectName // Retornar el nombre del objeto como identificador
-            } catch (e: Exception) {
-                println("Error uploading file: ${e.message}")
-                throw RuntimeException("Failed to upload file to MinIO", e)
-            } finally {
+        return ensureBucketExists()
+            .then(Mono.fromCallable {
                 try {
-                    inputStream.close()
+                    println("=== MINIO SERVICE: Uploading file: $objectName ===")
+                    
+                    val putObjectArgs = PutObjectArgs.builder()
+                        .bucket(minioProperties.bucketName)
+                        .`object`(objectName)
+                        .stream(inputStream, size, -1)
+                        .contentType(contentType)
+                        .build()
+
+                    val result = minioClient.putObject(putObjectArgs)
+                    println("File uploaded successfully: $objectName, ETag: ${result.etag()}")
+                    
+                    objectName // Retornar el nombre del objeto como identificador
                 } catch (e: Exception) {
-                    println("Warning: Failed to close input stream: ${e.message}")
+                    println("Error uploading file: ${e.message}")
+                    throw RuntimeException("Failed to upload file to MinIO", e)
+                } finally {
+                    try {
+                        inputStream.close()
+                    } catch (e: Exception) {
+                        println("Warning: Failed to close input stream: ${e.message}")
+                    }
                 }
-            }
-        }
+            })
             .subscribeOn(Schedulers.boundedElastic())
+    }
+
+    /**
+     * Asegura que el bucket existe antes de realizar operaciones
+     */
+    private fun ensureBucketExists(): Mono<Void> {
+        return createBucketIfNotExists()
+            .onErrorResume { error ->
+                println("Warning: Could not ensure bucket exists: ${error.message}")
+                Mono.empty() // Continúa aunque no se pueda verificar el bucket
+            }
     }
 
     /**
