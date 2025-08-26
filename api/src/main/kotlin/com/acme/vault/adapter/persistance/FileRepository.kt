@@ -1,4 +1,4 @@
-package com.acme.vault.adapter.out.persistance
+package com.acme.vault.adapter.persistance
 
 import com.acme.vault.domain.models.File
 import com.acme.vault.domain.models.FileStatus

@@ -1,6 +1,6 @@
 package com.acme.vault.application.service
 
-import com.acme.vault.adapter.out.persistance.UserRepository
+import com.acme.vault.adapter.persistance.UserRepository
 import com.acme.vault.domain.models.Role
 import com.acme.vault.domain.models.User
 import com.acme.vault.domain.service.IUserService

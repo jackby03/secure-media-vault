@@ -13,21 +13,3 @@ data class LoginRequest(
     @field:Size(min = 6, message = "Password debe tener mínimo 6 caracteres")
     val password: String
 )
-
-data class AuthResponse(
-    val accessToken: String,
-    val refreshToken: String,
-    val tokenType: String = "Bearer",
-    val expiresIn: Long,
-    val email: String,
-    val role: String
-)
-
-data class RefreshTokenRequest(
-    @field:NotBlank(message = "Refresh token es obligatorio")
-    val refreshToken: String
-)
-
-data class MessageResponse(
-    val message: String
-)

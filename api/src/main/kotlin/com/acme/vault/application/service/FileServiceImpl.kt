@@ -1,6 +1,6 @@
 package com.acme.vault.application.service
 
-import com.acme.vault.adapter.out.persistance.FileRepository
+import com.acme.vault.adapter.persistance.FileRepository
 import com.acme.vault.domain.models.File
 import com.acme.vault.domain.models.FileStatus
 import com.acme.vault.domain.service.IFileService

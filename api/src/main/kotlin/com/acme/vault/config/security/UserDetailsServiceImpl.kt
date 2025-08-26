@@ -1,6 +1,6 @@
 package com.acme.vault.config.security
 
-import com.acme.vault.adapter.out.persistance.UserRepository
+import com.acme.vault.adapter.persistance.UserRepository
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService
 import org.springframework.security.core.userdetails.User

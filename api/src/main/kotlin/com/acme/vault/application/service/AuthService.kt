@@ -1,6 +1,6 @@
 package com.acme.vault.application.service
 
-import com.acme.vault.adapter.out.persistance.UserRepository
+import com.acme.vault.adapter.persistance.UserRepository
 import com.acme.vault.adapter.web.dto.AuthResponse
 import com.acme.vault.config.properties.JwtProperties
 import org.springframework.security.core.authority.SimpleGrantedAuthority
