@@ -25,6 +25,23 @@ spring:
     password: guest
 
 app:
+  cache:
+    file-metadata:
+      ttl: PT30M  # 30 minutos
+      max-size: 1000
+      enabled: true
+    search-results:
+      ttl: PT15M  # 15 minutos
+      max-size: 500
+      enabled: true
+    thumbnails:
+      ttl: PT2H   # 2 horas
+      max-size: 2000
+      enabled: true
+    user-files:
+      ttl: PT10M  # 10 minutos
+      max-size: 100
+      enabled: true
   rabbitmq:
     host: rabbitmq
     port: 5672

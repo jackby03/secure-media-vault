@@ -54,6 +54,9 @@ dependencies {
     implementation("io.minio:minio:8.5.7")
     // --- Messaging ---
     implementation("org.springframework.boot:spring-boot-starter-amqp")
+    // --- Cache (Redis) ---
+    implementation("org.springframework.boot:spring-boot-starter-data-redis-reactive")
+    implementation("io.lettuce:lettuce-core")
     // --- Logs ---
     implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 }
