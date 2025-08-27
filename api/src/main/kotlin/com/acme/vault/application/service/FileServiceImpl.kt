@@ -1,6 +1,7 @@
 package com.acme.vault.application.service
 
 import com.acme.vault.adapter.persistance.FileRepository
+import com.acme.vault.domain.events.FileUploadedEvent
 import com.acme.vault.domain.models.File
 import com.acme.vault.domain.models.FileStatus
 import com.acme.vault.domain.service.IFileService
@@ -16,7 +17,8 @@ import java.util.UUID
 @Service
 class FileServiceImpl(
     private val fileRepository: FileRepository,
-    private val minioService: MinioService
+    private val minioService: MinioService,
+    private val eventPublisher: EventPublisherService
 ) : IFileService {
 
     override fun createFile(file: File): Mono<File?> {
@@ -147,10 +149,32 @@ class FileServiceImpl(
                                             ownerId = ownerId,
                                             status = FileStatus.PENDING
                                         )
-                                        // Guardar en BD
+                                        // Guardar en BD y publicar evento
                                         fileRepository.save(file)
-                                            .doOnSuccess {
-                                                println("File uploaded successfully: ${it.id}")
+                                            .flatMap { savedFile ->
+                                                println("File uploaded successfully: ${savedFile.id}")
+                                                
+                                                // Crear y publicar evento
+                                                val uploadEvent = FileUploadedEvent(
+                                                    fileId = savedFile.id!!,
+                                                    userId = ownerId,
+                                                    fileName = filename,
+                                                    originalName = originalName,
+                                                    size = fileBytes.size.toLong(),
+                                                    contentType = contentType,
+                                                    fileHash = fileHash,
+                                                    storagePath = storagePath
+                                                )
+                                                
+                                                // Publicar evento de forma asíncrona
+                                                eventPublisher.publishFileUploadedEvent(uploadEvent)
+                                                    .doOnSuccess {
+                                                        println("FileUploadedEvent published for file: ${savedFile.id}")
+                                                    }
+                                                    .doOnError { error ->
+                                                        println("Failed to publish FileUploadedEvent for file: ${savedFile.id}. Error: ${error.message}")
+                                                    }
+                                                    .thenReturn(savedFile)
                                             }
                                     } else {
                                         Mono.error(RuntimeException("Failed to upload file to MinIO"))

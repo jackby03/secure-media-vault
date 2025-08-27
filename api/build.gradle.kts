@@ -52,6 +52,8 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-jackson:0.13.0")
     // --- Storage ---
     implementation("io.minio:minio:8.5.7")
+    // --- Messaging ---
+    implementation("org.springframework.boot:spring-boot-starter-amqp")
     // --- Logs ---
     implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 }

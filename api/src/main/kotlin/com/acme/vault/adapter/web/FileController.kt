@@ -3,6 +3,7 @@ package com.acme.vault.adapter.web
 import com.acme.vault.adapter.web.dto.FileListResponse
 import com.acme.vault.adapter.web.dto.FileResponse
 import com.acme.vault.adapter.web.mapper.FileMapper
+import com.acme.vault.adapter.web.util.AuthenticationHelper
 import com.acme.vault.application.service.FileServiceImpl
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -12,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.server.ResponseStatusException
+import org.springframework.web.server.ServerWebExchange
 import reactor.core.publisher.Mono
 import java.util.UUID
 
@@ -19,18 +21,20 @@ import java.util.UUID
 @RequestMapping("/api/files")
 class FileController(
     private val fileService: FileServiceImpl,
-    private val fileMapper: FileMapper
+    private val fileMapper: FileMapper,
+    private val authHelper: AuthenticationHelper
 ) {
 
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
     fun uploadFile(
         @RequestPart("file") filePart: Mono<FilePart>,
-        authentication: Authentication
+        authentication: Authentication,
+        exchange: ServerWebExchange
     ): Mono<ResponseEntity<FileResponse>> {
 
         return filePart.flatMap { file ->
-            val userId = extractUserId(authentication)
+            val userId = authHelper.getUserIdFromAuthentication(authentication, exchange)
             val filename = file.filename()
             val originalName = filename
             val contentType = "application/octet-stream" // Default
@@ -60,10 +64,11 @@ class FileController(
     fun listFiles(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
-        authentication: Authentication
+        authentication: Authentication,
+        exchange: ServerWebExchange
     ): Mono<ResponseEntity<FileListResponse>> {
 
-        val userId = extractUserId(authentication)
+        val userId = authHelper.getUserIdFromAuthentication(authentication, exchange)
 
         return fileService.findByOwnerWithPagination(userId, page, size)
             .collectList()
@@ -88,10 +93,11 @@ class FileController(
     @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR', 'VIEWER')")
     fun getFileMetadata(
         @PathVariable id: UUID,
-        authentication: Authentication
+        authentication: Authentication,
+        exchange: ServerWebExchange
     ): Mono<ResponseEntity<FileResponse>> {
 
-        val userId = extractUserId(authentication)
+        val userId = authHelper.getUserIdFromAuthentication(authentication, exchange)
 
         return fileService.validateFileOwnership(id, userId)
             .flatMap { hasAccess ->
@@ -192,6 +198,43 @@ class FileController(
             }
             .onErrorMap { unused ->
                 ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Search failed")
+            }
+    }
+
+    @GetMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR', 'VIEWER')")
+    fun getFileStatus(
+        @PathVariable id: UUID,
+        authentication: Authentication
+    ): Mono<ResponseEntity<Map<String, Any>>> {
+
+        val userId = extractUserId(authentication)
+
+        return fileService.validateFileOwnership(id, userId)
+            .flatMap { hasAccess ->
+                if (hasAccess) {
+                    fileService.findById(id)
+                        .map { file ->
+                            if (file != null) {
+                                val statusInfo: Map<String, Any> = mapOf(
+                                    "fileId" to file.id!!,
+                                    "status" to file.status.name,
+                                    "createdAt" to file.createdAt!!.toString(),
+                                    "updatedAt" to file.updatedAt!!.toString(),
+                                    "processedAt" to (file.processedAt?.toString() ?: "Not processed yet"),
+                                    "canDownload" to (file.status == com.acme.vault.domain.models.FileStatus.READY)
+                                )
+                                ResponseEntity.ok(statusInfo)
+                            } else {
+                                ResponseEntity.notFound().build<Map<String, Any>>()
+                            }
+                        }
+                } else {
+                    Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN).build<Map<String, Any>>())
+                }
+            }
+            .onErrorMap { unused ->
+                ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to get file status")
             }
     }
 

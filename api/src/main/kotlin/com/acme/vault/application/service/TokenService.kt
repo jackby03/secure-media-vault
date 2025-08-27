@@ -34,6 +34,9 @@ class TokenService(
     fun extractEmail(token: String): String? =
         getAllClaims(token).subject
 
+    fun extractUserId(token: String): String? =
+        getAllClaims(token)["userId"] as String?
+
     fun isExpired(token: String): Boolean =
         getAllClaims(token)
             .expiration

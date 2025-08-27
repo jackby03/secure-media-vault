@@ -1,32 +1,21 @@
 spring:
-  application:
-    name: secure-media-vault
-  main:
-    web-application-type: reactive
   r2dbc:
     url: r2dbc:postgresql://localhost:5432/management
-    username: postgres
-    password: postgres
   flyway:
-    enabled: true
     url: jdbc:postgresql://localhost:5432/management
-    user: postgres
-    password: postgres
-    locations: classpath:db/migration
-    baseline-on-migrate: true
   data:
     redis:
-      host: redis
+      host: localhost
       port: 6379
   rabbitmq:
-    host: rabbitmq
+    host: localhost
     port: 5672
     username: guest
     password: guest
 
 app:
   rabbitmq:
-    host: rabbitmq
+    host: localhost
     port: 5672
     username: guest
     password: guest
@@ -43,27 +32,8 @@ app:
       file-processing-completed: file.processing.completed
       file-processing-failed: file.processing.failed
 
-server:
-  port: 8080
-
 minio:
-  url: http://minio:9000
+  url: http://localhost:9000
   access-key: minioadmin
   secret-key: minioadmin
   bucket-name: secure-media-vault
-  connect-timeout: 10000
-  write-timeout: 60000
-  read-timeout: 10000
-
-logging:
-  level:
-    org:
-      springframework:
-        r2dbc:
-          core: debug
-        data:
-          r2dbc: debug
-jwt:
-  key: "tu-clave-secreta-aqui-debe-ser-muy-larga-para-ser-segura"
-  access-token-expiration: 3600000  # 1 hora
-  refresh-token-expiration: 86400000  # 24 horas

@@ -34,6 +34,7 @@ class SecurityConfig {
             .authorizeExchange { exchanges ->
                 exchanges
                     .pathMatchers("/actuator/health").permitAll()
+                    .pathMatchers("/api/processing/**").permitAll()  // Health checks públicos
                     .pathMatchers(HttpMethod.POST, "/auth/login").permitAll()
                     .pathMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
                     .pathMatchers(HttpMethod.GET, "/api/users").hasAnyRole("ADMIN", "EDITOR")
