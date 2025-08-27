@@ -2,14 +2,8 @@ package com.acme.vault.adapter.web
 
 import com.acme.vault.adapter.web.dto.FileListResponse
 import com.acme.vault.adapter.web.dto.FileResponse
-import com.acme.vault.adapter.web.dto.FileUploadRequest
 import com.acme.vault.adapter.web.mapper.FileMapper
-import com.acme.vault.adapter.web.util.AuthenticationHelper
-import com.acme.vault.adapter.web.util.FileUtils
 import com.acme.vault.application.service.FileServiceImpl
-import com.acme.vault.domain.service.IFileService
-import jakarta.validation.Valid
-import org.springframework.core.io.buffer.DataBuffer
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -18,9 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.server.ResponseStatusException
-import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import reactor.util.function.Tuple2
 import java.util.UUID
 
 @RestController
@@ -39,7 +31,7 @@ class FileController(
 
         return filePart.flatMap { file ->
             val userId = extractUserId(authentication)
-            val filename = file.filename() ?: "unknown"
+            val filename = file.filename()
             val originalName = filename
             val contentType = "application/octet-stream" // Default
 
@@ -76,7 +68,9 @@ class FileController(
         return fileService.findByOwnerWithPagination(userId, page, size)
             .collectList()
             .zipWith(fileService.countFilesByOwner(userId))
-            .map { (files, totalElements) ->
+            .map { tuple ->
+                val files = tuple.t1
+                val totalElements = tuple.t2
                 val response = fileMapper.toFileListResponse(
                     files = files,
                     totalElements = totalElements,
@@ -85,7 +79,7 @@ class FileController(
                 )
                 ResponseEntity.ok(response)
             }
-            .onErrorMap { error ->
+            .onErrorMap { unused ->
                 ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to list files")
             }
     }
@@ -114,7 +108,7 @@ class FileController(
                     Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN).build<FileResponse>())
                 }
             }
-            .onErrorMap { error ->
+            .onErrorMap { unused ->
                 ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to get file metadata")
             }
     }
@@ -130,10 +124,6 @@ class FileController(
 
         return fileService.getDownloadUrl(id, userId, 60)
             .map { downloadUrl ->
-                val response = mapOf(
-                    "downloadUrl" to downloadUrl,
-                    "expiresInMinutes" to 60
-                )
                 ResponseEntity.ok(downloadUrl)
             }
             .onErrorMap { error ->
@@ -168,7 +158,7 @@ class FileController(
                     Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN).build<Void>())
                 }
             }
-            .onErrorMap { error ->
+            .onErrorMap { unused ->
                 ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Delete failed")
             }
     }
@@ -189,7 +179,9 @@ class FileController(
             .take(size.toLong())
             .collectList()
             .zipWith(fileService.searchFilesByName(userId, query).count())
-            .map { (files, totalElements) ->
+            .map { tuple ->
+                val files = tuple.t1
+                val totalElements = tuple.t2
                 val response = fileMapper.toFileListResponse(
                     files = files,
                     totalElements = totalElements,
@@ -198,7 +190,7 @@ class FileController(
                 )
                 ResponseEntity.ok(response)
             }
-            .onErrorMap { error ->
+            .onErrorMap { unused ->
                 ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Search failed")
             }
     }
