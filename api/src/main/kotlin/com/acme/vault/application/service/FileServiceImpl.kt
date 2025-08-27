@@ -55,20 +55,39 @@ class FileServiceImpl(
                 println("File found in cache: ${cachedFile.id}")
             }
             .switchIfEmpty(
-                // Si no está en cache, buscar en BD y cachear
+                // Si no está en cache o hay error, buscar en BD y cachear
                 fileRepository.findById(id)
                     .cast(File::class.java)
                     .flatMap { file ->
                         println("File found in DB, caching: ${file.id}")
+                        // Intentar cachear, pero no fallar si el cache falla
                         cacheService.cacheFileMetadata(id.toString(), file)
+                            .doOnSuccess { cached ->
+                                if (cached) {
+                                    println("File cached successfully: ${file.id}")
+                                } else {
+                                    println("Failed to cache file: ${file.id}")
+                                }
+                            }
+                            .onErrorResume { error ->
+                                println("Cache operation failed for file: ${file.id}. Error: ${error.message}")
+                                Mono.just(false)
+                            }
                             .thenReturn(file)
                     }
                     .doOnNext { file -> 
-                        println("File cached successfully: ${file.id}")
+                        println("File processing completed: ${file.id}")
                     }
             )
             .map { it as File? }
             .switchIfEmpty(Mono.empty())
+            .onErrorResume { error ->
+                println("Error in findById for id: $id. Error: ${error.message}")
+                // Si todo falla, intentar solo desde BD sin cache
+                fileRepository.findById(id)
+                    .map { it as File? }
+                    .switchIfEmpty(Mono.empty())
+            }
     }
 
     override fun findByOwner(ownerId: UUID): Flux<File> {

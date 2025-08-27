@@ -114,8 +114,24 @@ class FileController(
                     Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN).build<FileResponse>())
                 }
             }
-            .onErrorMap { unused ->
-                ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to get file metadata")
+            .onErrorResume { error ->
+                println("Error in getFileMetadata for id: $id. Error: ${error.message}")
+                when {
+                    error.message?.contains("cache", ignoreCase = true) == true -> {
+                        // Si es error de cache, intentar directamente desde BD
+                        fileService.findById(id)
+                            .flatMap { file ->
+                                if (file != null) {
+                                    Mono.just(ResponseEntity.ok(fileMapper.toFileResponse(file)))
+                                } else {
+                                    Mono.just(ResponseEntity.notFound().build<FileResponse>())
+                                }
+                            }
+                    }
+                    else -> {
+                        Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build<FileResponse>())
+                    }
+                }
             }
     }
 

@@ -29,6 +29,10 @@ class CacheService(
         val key = "file:metadata:$fileId"
         return redisTemplate.opsForValue()
             .set(key, metadata, cacheProperties.fileMetadata.ttl)
+            .onErrorResume { error ->
+                println("Error caching file metadata for key: $key. Error: ${error.message}")
+                Mono.just(false)
+            }
     }
 
     fun getFileMetadata(fileId: String): Mono<Any?> {
@@ -38,6 +42,13 @@ class CacheService(
 
         val key = "file:metadata:$fileId"
         return redisTemplate.opsForValue().get(key)
+            .onErrorResume { error ->
+                println("Error retrieving file metadata from cache for key: $key. Error: ${error.message}")
+                // Invalidar entrada corrupta
+                redisTemplate.delete(key)
+                    .doOnSuccess { println("Corrupted cache entry deleted for key: $key") }
+                    .then(Mono.empty<Any>())
+            }
     }
 
     /**
@@ -63,6 +74,13 @@ class CacheService(
         return redisTemplate.opsForValue().get(key)
             .cast(List::class.java)
             .map { it as List<com.acme.vault.domain.models.File> }
+            .onErrorResume { error ->
+                println("Error retrieving search results from cache for key: $key. Error: ${error.message}")
+                // Invalidar entrada corrupta
+                redisTemplate.delete(key)
+                    .doOnSuccess { println("Corrupted search cache entry deleted for key: $key") }
+                    .then(Mono.empty<List<com.acme.vault.domain.models.File>>())
+            }
     }
 
     /**
@@ -76,6 +94,10 @@ class CacheService(
         val key = "user:files:$userId:all"
         return redisTemplate.opsForValue()
             .set(key, files, cacheProperties.userFiles.ttl)
+            .onErrorResume { error ->
+                println("Error caching user files for key: $key. Error: ${error.message}")
+                Mono.just(false)
+            }
     }
 
     fun getUserFiles(userId: String): Mono<List<com.acme.vault.domain.models.File>?> {
@@ -87,6 +109,13 @@ class CacheService(
         return redisTemplate.opsForValue().get(key)
             .cast(List::class.java)
             .map { it as List<com.acme.vault.domain.models.File> }
+            .onErrorResume { error ->
+                println("Error retrieving user files from cache for key: $key. Error: ${error.message}")
+                // Invalidar entrada corrupta
+                redisTemplate.delete(key)
+                    .doOnSuccess { println("Corrupted user files cache entry deleted for key: $key") }
+                    .then(Mono.empty<List<com.acme.vault.domain.models.File>>())
+            }
     }
 
     /**
