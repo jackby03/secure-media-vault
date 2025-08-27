@@ -41,9 +41,9 @@ class CacheService(
     }
 
     /**
-     * Cache de resultados de búsquedas
+     * Cache de resultados de búsquedas tipado
      */
-    fun cacheSearchResults(searchKey: String, results: Any): Mono<Boolean> {
+    fun cacheSearchResults(searchKey: String, results: List<com.acme.vault.domain.models.File>): Mono<Boolean> {
         if (!cacheProperties.searchResults.enabled) {
             return Mono.just(false)
         }
@@ -53,17 +53,44 @@ class CacheService(
             .set(key, results, cacheProperties.searchResults.ttl)
     }
 
-    fun getSearchResults(searchKey: String): Mono<Any?> {
+    @Suppress("UNCHECKED_CAST")
+    fun getSearchResults(searchKey: String): Mono<List<com.acme.vault.domain.models.File>?> {
         if (!cacheProperties.searchResults.enabled) {
             return Mono.empty()
         }
 
         val key = "search:$searchKey"
         return redisTemplate.opsForValue().get(key)
+            .cast(List::class.java)
+            .map { it as List<com.acme.vault.domain.models.File> }
     }
 
     /**
-     * Cache de archivos por usuario
+     * Cache de archivos por usuario - Overload sin paginación
+     */
+    fun cacheUserFiles(userId: String, files: List<com.acme.vault.domain.models.File>): Mono<Boolean> {
+        if (!cacheProperties.userFiles.enabled) {
+            return Mono.just(false)
+        }
+
+        val key = "user:files:$userId:all"
+        return redisTemplate.opsForValue()
+            .set(key, files, cacheProperties.userFiles.ttl)
+    }
+
+    fun getUserFiles(userId: String): Mono<List<com.acme.vault.domain.models.File>?> {
+        if (!cacheProperties.userFiles.enabled) {
+            return Mono.empty()
+        }
+
+        val key = "user:files:$userId:all"
+        return redisTemplate.opsForValue().get(key)
+            .cast(List::class.java)
+            .map { it as List<com.acme.vault.domain.models.File> }
+    }
+
+    /**
+     * Cache de archivos por usuario con paginación
      */
     fun cacheUserFiles(userId: String, page: Int, size: Int, files: Any): Mono<Boolean> {
         if (!cacheProperties.userFiles.enabled) {

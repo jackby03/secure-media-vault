@@ -18,7 +18,8 @@ import java.util.UUID
 class FileServiceImpl(
     private val fileRepository: FileRepository,
     private val minioService: MinioService,
-    private val eventPublisher: EventPublisherService
+    private val eventPublisher: EventPublisherService,
+    private val cacheService: CacheService
 ) : IFileService {
 
     override fun createFile(file: File): Mono<File?> {
@@ -45,14 +46,62 @@ class FileServiceImpl(
     }
 
     override fun findById(id: UUID): Mono<File?> {
-        return fileRepository.findById(id)
+        println("=== FILE SERVICE: findById() called for: $id ===")
+        
+        // Intentar obtener desde cache primero
+        return cacheService.getFileMetadata(id.toString())
+            .cast(File::class.java)
+            .doOnNext { cachedFile -> 
+                println("File found in cache: ${cachedFile.id}")
+            }
+            .switchIfEmpty(
+                // Si no está en cache, buscar en BD y cachear
+                fileRepository.findById(id)
+                    .cast(File::class.java)
+                    .flatMap { file ->
+                        println("File found in DB, caching: ${file.id}")
+                        cacheService.cacheFileMetadata(id.toString(), file)
+                            .thenReturn(file)
+                    }
+                    .doOnNext { file -> 
+                        println("File cached successfully: ${file.id}")
+                    }
+            )
             .map { it as File? }
             .switchIfEmpty(Mono.empty())
     }
 
     override fun findByOwner(ownerId: UUID): Flux<File> {
         println("=== FILE SERVICE: findByOwner() called for owner: $ownerId ===")
-        return fileRepository.findByOwnerId(ownerId)
+        
+        // Intentar obtener desde cache primero
+        return cacheService.getUserFiles(ownerId.toString())
+            .flatMapMany { cachedFiles: List<File>? ->
+                if (cachedFiles != null) {
+                    println("Files found in cache for owner: $ownerId (${cachedFiles.size} files)")
+                    Flux.fromIterable(cachedFiles)
+                } else {
+                    Flux.empty()
+                }
+            }
+            .switchIfEmpty(
+                // Si no está en cache, buscar en BD y cachear
+                fileRepository.findByOwnerId(ownerId)
+                    .collectList()
+                    .flatMapMany { filesList: List<File> ->
+                        println("Files found in DB for owner: $ownerId (${filesList.size} files)")
+                        
+                        // Cachear la lista de archivos del usuario
+                        cacheService.cacheUserFiles(ownerId.toString(), filesList)
+                            .doOnSuccess { 
+                                println("User files cached successfully for owner: $ownerId")
+                            }
+                            .doOnError { error ->
+                                println("Failed to cache user files for owner: $ownerId. Error: ${error.message}")
+                            }
+                            .thenMany(Flux.fromIterable(filesList))
+                    }
+            )
             .doOnNext { file -> println("Found file for owner: ${file.originalName}") }
             .doOnComplete { println("Completed findByOwner") }
             .doOnError { error -> println("Error in findByOwner: ${error.message}") }
@@ -66,6 +115,18 @@ class FileServiceImpl(
     override fun updateFile(file: File): Mono<File?> {
         val updatedFile = file.copy(updatedAt = LocalDateTime.now())
         return fileRepository.save(updatedFile)
+            .doOnSuccess { savedFile ->
+                // Invalidar cache de forma asíncrona sin bloquear
+                val fileId = savedFile.id
+                if (fileId != null) {
+                    cacheService.invalidateFileMetadata(fileId.toString())
+                        .then(cacheService.invalidateUserFilesCache(savedFile.ownerId.toString()))
+                        .doOnSuccess { 
+                            println("Cache invalidated for updated file: $fileId")
+                        }
+                        .subscribe() // Ejecutar de forma asíncrona sin esperar
+                }
+            }
             .map { it as File? }
     }
 
@@ -79,6 +140,18 @@ class FileServiceImpl(
                         LocalDateTime.now() else file.processedAt
                 )
                 fileRepository.save(updatedFile)
+                    .doOnSuccess { savedFile ->
+                        // Invalidar cache de forma asíncrona sin bloquear
+                        val fileId = savedFile.id
+                        if (fileId != null) {
+                            cacheService.invalidateFileMetadata(fileId.toString())
+                                .then(cacheService.invalidateUserFilesCache(savedFile.ownerId.toString()))
+                                .doOnSuccess { 
+                                    println("Cache invalidated for status update of file: $fileId")
+                                }
+                                .subscribe() // Ejecutar de forma asíncrona sin esperar
+                        }
+                    }
             }
             .map { it as File? }
     }
@@ -92,6 +165,22 @@ class FileServiceImpl(
                         if (deleted) {
                             // Eliminar de BD
                             fileRepository.deleteById(id)
+                                .then(
+                                    // Invalidar cache del archivo específico y del usuario
+                                    Mono.defer {
+                                        val fileId = file.id
+                                        if (fileId != null) {
+                                            cacheService.invalidateFileMetadata(fileId.toString())
+                                                .then(cacheService.invalidateUserFilesCache(file.ownerId.toString()))
+                                                .then(cacheService.invalidateSearchCache())
+                                                .doOnSuccess { 
+                                                    println("Cache invalidated for deleted file: $fileId")
+                                                }
+                                        } else {
+                                            Mono.empty<Void>()
+                                        }
+                                    }
+                                )
                                 .thenReturn(true)
                         } else {
                             println("Failed to delete file from MinIO: ${file.storagePath}")
@@ -154,26 +243,32 @@ class FileServiceImpl(
                                             .flatMap { savedFile ->
                                                 println("File uploaded successfully: ${savedFile.id}")
                                                 
-                                                // Crear y publicar evento
-                                                val uploadEvent = FileUploadedEvent(
-                                                    fileId = savedFile.id!!,
-                                                    userId = ownerId,
-                                                    fileName = filename,
-                                                    originalName = originalName,
-                                                    size = fileBytes.size.toLong(),
-                                                    contentType = contentType,
-                                                    fileHash = fileHash,
-                                                    storagePath = storagePath
-                                                )
-                                                
-                                                // Publicar evento de forma asíncrona
-                                                eventPublisher.publishFileUploadedEvent(uploadEvent)
-                                                    .doOnSuccess {
-                                                        println("FileUploadedEvent published for file: ${savedFile.id}")
+                                                // Invalidar cache del usuario para que se actualice la lista
+                                                cacheService.invalidateUserFilesCache(ownerId.toString())
+                                                    .doOnSuccess { 
+                                                        println("User files cache invalidated for new upload: ${savedFile.id}")
                                                     }
-                                                    .doOnError { error ->
-                                                        println("Failed to publish FileUploadedEvent for file: ${savedFile.id}. Error: ${error.message}")
-                                                    }
+                                                    .then(
+                                                        // Crear y publicar evento
+                                                        eventPublisher.publishFileUploadedEvent(
+                                                            FileUploadedEvent(
+                                                                fileId = savedFile.id!!,
+                                                                userId = ownerId,
+                                                                fileName = filename,
+                                                                originalName = originalName,
+                                                                size = fileBytes.size.toLong(),
+                                                                contentType = contentType,
+                                                                fileHash = fileHash,
+                                                                storagePath = storagePath
+                                                            )
+                                                        )
+                                                            .doOnSuccess {
+                                                                println("FileUploadedEvent published for file: ${savedFile.id}")
+                                                            }
+                                                            .doOnError { error ->
+                                                                println("Failed to publish FileUploadedEvent for file: ${savedFile.id}. Error: ${error.message}")
+                                                            }
+                                                    )
                                                     .thenReturn(savedFile)
                                             }
                                     } else {
@@ -262,7 +357,38 @@ class FileServiceImpl(
     // === SEARCH OPERATIONS ===
 
     override fun searchFilesByName(ownerId: UUID, searchTerm: String): Flux<File> {
-        return fileRepository.searchByNameAndOwner(ownerId, searchTerm)
+        println("=== FILE SERVICE: searchFilesByName() called for owner: $ownerId, term: $searchTerm ===")
+        
+        val cacheKey = "search:${ownerId}:${searchTerm.lowercase()}"
+        
+        // Intentar obtener desde cache primero
+        return cacheService.getSearchResults(cacheKey)
+            .flatMapMany { cachedResults: List<File>? ->
+                if (cachedResults != null) {
+                    println("Search results found in cache for: $searchTerm (${cachedResults.size} results)")
+                    Flux.fromIterable(cachedResults)
+                } else {
+                    Flux.empty()
+                }
+            }
+            .switchIfEmpty(
+                // Si no está en cache, buscar en BD y cachear
+                fileRepository.searchByNameAndOwner(ownerId, searchTerm)
+                    .collectList()
+                    .flatMapMany { resultsList: List<File> ->
+                        println("Search results found in DB for: $searchTerm (${resultsList.size} results)")
+                        
+                        // Cachear los resultados de búsqueda
+                        cacheService.cacheSearchResults(cacheKey, resultsList)
+                            .doOnSuccess { 
+                                println("Search results cached successfully for: $searchTerm")
+                            }
+                            .doOnError { error ->
+                                println("Failed to cache search results for: $searchTerm. Error: ${error.message}")
+                            }
+                            .thenMany(Flux.fromIterable(resultsList))
+                    }
+            )
     }
 
     override fun findFilesByTag(ownerId: UUID, tag: String): Flux<File> {
