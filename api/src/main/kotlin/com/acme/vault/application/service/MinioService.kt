@@ -8,10 +8,9 @@ import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
 import reactor.core.scheduler.Schedulers
 import java.io.InputStream
-import java.security.InvalidKeyException
-import java.security.NoSuchAlgorithmException
 import java.time.Duration
 import java.util.concurrent.TimeUnit
+import kotlin.text.toLong
 
 @Service
 class MinioService(
@@ -74,34 +73,28 @@ class MinioService(
         objectName: String,
         contentType: String,
         size: Long = -1
-    ): Mono<String> {
-        return ensureBucketExists()
-            .then(Mono.fromCallable {
-                try {
-                    println("=== MINIO SERVICE: Uploading file: $objectName ===")
-                    
-                    val putObjectArgs = PutObjectArgs.builder()
+    ): Mono<Boolean> {
+        return Mono.fromCallable {
+            try {
+                println("=== MINIO SERVICE: Uploading file: $objectName ===")
+
+                minioClient.putObject(
+                    PutObjectArgs.builder()
                         .bucket(minioProperties.bucketName)
                         .`object`(objectName)
-                        .stream(inputStream, size, -1)
+                        .stream(inputStream, inputStream.available().toLong(), -1)
                         .contentType(contentType)
                         .build()
-
-                    val result = minioClient.putObject(putObjectArgs)
-                    println("File uploaded successfully: $objectName, ETag: ${result.etag()}")
-                    
-                    objectName // Retornar el nombre del objeto como identificador
-                } catch (e: Exception) {
-                    println("Error uploading file: ${e.message}")
-                    throw RuntimeException("Failed to upload file to MinIO", e)
-                } finally {
-                    try {
-                        inputStream.close()
-                    } catch (e: Exception) {
-                        println("Warning: Failed to close input stream: ${e.message}")
-                    }
-                }
-            })
+                )
+                println("File uploaded successfully: $objectName")
+                true
+            } catch (e: Exception) {
+                println("Error uploading file: ${e.message}")
+                false
+            } finally {
+                inputStream.close()
+            }
+        }
             .subscribeOn(Schedulers.boundedElastic())
     }
 
@@ -172,21 +165,15 @@ class MinioService(
     ): Mono<String> {
         return Mono.fromCallable {
             try {
-                println("=== MINIO SERVICE: Generating presigned URL for: $objectName ===")
-                
-                val url = minioClient.getPresignedObjectUrl(
+                minioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                         .method(Method.GET)
                         .bucket(minioProperties.bucketName)
                         .`object`(objectName)
-                        .expiry(expiry.seconds.toInt(), TimeUnit.SECONDS)
+                        .expiry(expiry.seconds.toInt())
                         .build()
                 )
-                
-                println("Presigned URL generated successfully for: $objectName")
-                url
             } catch (e: Exception) {
-                println("Error generating presigned URL: ${e.message}")
                 throw RuntimeException("Failed to generate presigned URL", e)
             }
         }
