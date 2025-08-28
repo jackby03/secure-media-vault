@@ -5,9 +5,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import java.time.LocalDateTime
 import java.util.UUID
 
-/**
- * Evento base para todos los eventos de archivos
- */
 @JsonTypeInfo(
     use = JsonTypeInfo.Id.NAME,
     include = JsonTypeInfo.As.PROPERTY,
@@ -27,9 +24,6 @@ abstract class FileEvent {
     abstract val eventType: String
 }
 
-/**
- * Evento disparado cuando un archivo es subido exitosamente
- */
 data class FileUploadedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override val fileId: UUID,
@@ -44,9 +38,6 @@ data class FileUploadedEvent(
     val storagePath: String
 ) : FileEvent()
 
-/**
- * Evento disparado cuando inicia el procesamiento de un archivo
- */
 data class FileProcessingStartedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override val fileId: UUID,
@@ -57,9 +48,6 @@ data class FileProcessingStartedEvent(
     val estimatedDurationSeconds: Long? = null
 ) : FileEvent()
 
-/**
- * Evento disparado cuando el procesamiento de un archivo se completa exitosamente
- */
 data class FileProcessingCompletedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override val fileId: UUID,
@@ -71,9 +59,6 @@ data class FileProcessingCompletedEvent(
     val outputMetadata: Map<String, Any> = emptyMap()
 ) : FileEvent()
 
-/**
- * Evento disparado cuando el procesamiento de un archivo falla
- */
 data class FileProcessingFailedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override val fileId: UUID,

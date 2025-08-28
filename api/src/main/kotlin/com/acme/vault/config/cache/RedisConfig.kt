@@ -10,35 +10,25 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.RedisSerializationContext
 import org.springframework.data.redis.serializer.StringRedisSerializer
 
-/**
- * Configuración de Redis para cache reactivo
- * Fase 4.1 - Cache con Redis
- */
 @Configuration
 class RedisConfig {
 
     @Bean
     fun redisObjectMapper(): ObjectMapper {
-        return ObjectMapper()
-            .registerKotlinModule()
-            .findAndRegisterModules()
+        return ObjectMapper().registerKotlinModule().findAndRegisterModules()
     }
 
     @Bean
     fun reactiveRedisTemplate(
-        connectionFactory: ReactiveRedisConnectionFactory,
-        redisObjectMapper: ObjectMapper
+        connectionFactory: ReactiveRedisConnectionFactory, redisObjectMapper: ObjectMapper
     ): ReactiveRedisTemplate<String, Any> {
 
         val keySerializer = StringRedisSerializer()
         val valueSerializer = GenericJackson2JsonRedisSerializer(redisObjectMapper)
 
-        val serializationContext = RedisSerializationContext
-            .newSerializationContext<String, Any>(keySerializer)
-            .value(valueSerializer)
-            .hashKey(keySerializer)
-            .hashValue(valueSerializer)
-            .build()
+        val serializationContext =
+            RedisSerializationContext.newSerializationContext<String, Any>(keySerializer).value(valueSerializer)
+                .hashKey(keySerializer).hashValue(valueSerializer).build()
 
         return ReactiveRedisTemplate(connectionFactory, serializationContext)
     }

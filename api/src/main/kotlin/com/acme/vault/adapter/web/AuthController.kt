@@ -1,6 +1,5 @@
 package com.acme.vault.adapter.web
 
-import com.acme.vault.adapter.web.dto.AuthResponse
 import com.acme.vault.adapter.web.dto.LoginRequest
 import com.acme.vault.adapter.web.dto.MessageResponse
 import com.acme.vault.adapter.web.dto.RefreshTokenRequest
@@ -8,7 +7,10 @@ import com.acme.vault.application.service.AuthService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 import reactor.core.publisher.Mono
 
 @RestController

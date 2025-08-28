@@ -6,7 +6,6 @@ import org.springframework.http.HttpHeaders
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Component
 import org.springframework.web.server.ServerWebExchange
-import reactor.core.publisher.Mono
 import java.util.UUID
 
 @Component
@@ -14,27 +13,34 @@ class AuthenticationHelper(
     private val tokenService: TokenService
 ) {
     
+    companion object {
+        private const val BEARER_PREFIX = "Bearer "
+        private const val BEARER_PREFIX_LENGTH = 7
+    }
+    
     fun getUserRoleFromAuthentication(authentication: Authentication): Role {
         val authorities = authentication.authorities
         return when {
             authorities.any { it.authority == "ROLE_ADMIN" } -> Role.ADMIN
             authorities.any { it.authority == "ROLE_EDITOR" } -> Role.EDITOR
             authorities.any { it.authority == "ROLE_VIEWER" } -> Role.VIEWER
-            else -> Role.VIEWER // Default fallback
+            else -> Role.VIEWER
         }
     }
     
     fun getUserIdFromAuthentication(authentication: Authentication, exchange: ServerWebExchange): UUID {
-        // Extraer token del header Authorization
         val authHeader = exchange.request.headers.getFirst(HttpHeaders.AUTHORIZATION)
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            val token = authHeader.substring(7) // Remover "Bearer "
-            val userIdStr = tokenService.extractUserId(token)
-            if (userIdStr != null) {
-                return UUID.fromString(userIdStr)
-            }
+            ?: throw IllegalStateException("Authorization header not found")
+        
+        if (!authHeader.startsWith(BEARER_PREFIX)) {
+            throw IllegalStateException("Invalid authorization header format")
         }
-        // Fallback en caso de que no se pueda extraer
-        throw IllegalStateException("Could not extract user ID from authentication")
+        
+        val token = authHeader.substring(BEARER_PREFIX_LENGTH)
+        val userIdStr = tokenService.extractUserId(token)
+            ?: throw IllegalStateException("Could not extract user ID from token")
+        
+        return runCatching { UUID.fromString(userIdStr) }
+            .getOrElse { throw IllegalStateException("Invalid user ID format: $userIdStr") }
     }
 }

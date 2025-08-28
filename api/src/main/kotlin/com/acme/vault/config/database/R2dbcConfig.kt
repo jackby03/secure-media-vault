@@ -12,10 +12,6 @@ import org.springframework.r2dbc.connection.R2dbcTransactionManager
 import org.springframework.transaction.ReactiveTransactionManager
 import java.time.Duration
 
-/**
- * Configuración optimizada de R2DBC para PostgreSQL
- * Fase 4.2 - Optimizaciones de BD
- */
 @Configuration
 @EnableR2dbcRepositories(basePackages = ["com.acme.vault.adapter.persistance"])
 class R2dbcConfig : AbstractR2dbcConfiguration() {
@@ -44,16 +40,13 @@ class R2dbcConfig : AbstractR2dbcConfiguration() {
                 .database(database)
                 .username(username)
                 .password(password)
-                // Connection Pool Optimizations
                 .connectTimeout(Duration.ofSeconds(10))
                 .lockWaitTimeout(Duration.ofSeconds(30))
                 .statementTimeout(Duration.ofSeconds(60))
                 .tcpKeepAlive(true)
                 .tcpNoDelay(true)
-                // Performance Optimizations
                 .preparedStatementCacheQueries(256)
                 .applicationName("secure-media-vault")
-                // Connection Pool Settings
                 .build()
         )
     }

@@ -8,10 +8,6 @@ import org.springframework.web.server.ServerWebExchange
 import reactor.core.publisher.Mono
 import java.time.LocalDateTime
 
-/**
- * Global Exception Handler para manejar errores de cache y otros errores de la aplicación
- * Fase 4.1.1 - Error Handling para Cache
- */
 @ControllerAdvice
 class GlobalExceptionHandler {
 
