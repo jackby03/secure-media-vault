@@ -26,23 +26,11 @@ class RabbitConfig(
     @Bean
     fun rabbitConnectionFactory(): ConnectionFactory {
         val factory = CachingConnectionFactory()
-        
-        try {
-            factory.setHost(rabbitProperties.host)
-            factory.setPort(rabbitProperties.port)
-            factory.setUsername(rabbitProperties.username)
-            factory.setPassword(rabbitProperties.password)
-            factory.setVirtualHost(rabbitProperties.virtualHost)
-            
-            // Configuración de timeouts
-            factory.setConnectionTimeout(10000) // 10 segundos
-            factory.setRequestedHeartBeat(30) // 30 segundos
-            
-            println("=== RABBITMQ CONFIG: Configured connection to ${rabbitProperties.host}:${rabbitProperties.port} ===")
-        } catch (e: Exception) {
-            println("=== RABBITMQ CONFIG: Error configuring RabbitMQ connection: ${e.message} ===")
-            println("Make sure RabbitMQ is running on ${rabbitProperties.host}:${rabbitProperties.port}")
-        }
+        factory.setHost(rabbitProperties.host)
+        factory.setPort(rabbitProperties.port)
+        factory.setUsername(rabbitProperties.username)
+        factory.setPassword(rabbitProperties.password)
+        factory.setVirtualHost(rabbitProperties.virtualHost)
         
         return factory
     }
