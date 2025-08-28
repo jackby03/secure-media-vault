@@ -5,6 +5,7 @@ import com.acme.vault.domain.events.FileUploadedEvent
 import com.acme.vault.domain.models.File
 import com.acme.vault.domain.models.FileStatus
 import com.acme.vault.domain.service.IFileService
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.buffer.DataBuffer
 import org.springframework.core.io.buffer.DataBufferUtils
 import org.springframework.stereotype.Service
@@ -21,6 +22,10 @@ class FileServiceImpl(
     private val eventPublisher: EventPublisherService,
     private val cacheService: CacheService
 ) : IFileService {
+
+    // Inyección de dependencia para consultas optimizadas (Fase 4.2)
+    @Autowired
+    private lateinit var optimizedQueryService: OptimizedQueryService
 
     override fun createFile(file: File): Mono<File?> {
         println("=== FILE SERVICE: createFile() called for: ${file.originalName} ===")
@@ -449,5 +454,65 @@ class FileServiceImpl(
     private fun generateStoragePath(ownerId: UUID, filename: String): String {
         val sanitizedFilename = filename.replace("[^a-zA-Z0-9._-]".toRegex(), "_")
         return "files/$ownerId/${UUID.randomUUID()}_$sanitizedFilename"
+    }
+
+    // ============= MÉTODOS OPTIMIZADOS - FASE 4.2 =============
+    
+    /**
+     * Búsqueda optimizada usando consultas de BD optimizadas
+     */
+    fun searchFilesOptimized(
+        ownerId: UUID,
+        searchTerm: String? = null,
+        contentTypeFilter: String? = null,
+        statusFilter: String = "READY",
+        limit: Int = 20,
+        offset: Int = 0
+    ): Flux<File> {
+        return optimizedQueryService.searchFilesOptimized(
+            ownerId, searchTerm, contentTypeFilter, statusFilter, limit, offset
+        )
+    }
+
+    /**
+     * Obtiene estadísticas optimizadas de archivos por usuario
+     */
+    fun getUserFileStats(ownerId: UUID): Mono<Map<String, Any>> {
+        return optimizedQueryService.getFileStatsByUser(ownerId)
+    }
+
+    /**
+     * Búsqueda por rango de fechas optimizada
+     */
+    fun findFilesByDateRangeOptimized(
+        ownerId: UUID,
+        startDate: LocalDateTime,
+        endDate: LocalDateTime,
+        limit: Int = 50
+    ): Flux<File> {
+        return optimizedQueryService.findFilesByDateRange(ownerId, startDate, endDate, limit)
+    }
+
+    /**
+     * Búsqueda por rango de tamaño optimizada
+     */
+    fun findFilesBySizeRangeOptimized(
+        ownerId: UUID,
+        minSize: Long,
+        maxSize: Long,
+        limit: Int = 50
+    ): Flux<File> {
+        return optimizedQueryService.findFilesBySizeRange(ownerId, minSize, maxSize, limit)
+    }
+
+    /**
+     * Búsqueda por tipo de contenido con índices optimizados
+     */
+    fun findFilesByContentTypeOptimized(
+        ownerId: UUID,
+        contentTypePrefix: String,
+        limit: Int = 50
+    ): Flux<File> {
+        return optimizedQueryService.findFilesByContentTypeOptimized(ownerId, contentTypePrefix, limit)
     }
 }
