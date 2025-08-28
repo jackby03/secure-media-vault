@@ -133,10 +133,13 @@ cd secure-media-vault
 cp .env.sample .env
 # Editar .env con tus configuraciones
 
-# 3. Levantar la infraestructura completa
+# 3. Construir la aplicación
+./gradlew clean build -x test
+
+# 4. Levantar la infraestructura completa
 docker-compose up -d
 
-# 4. Verificar que todo esté funcionando
+# 5. Verificar que todo esté funcionando
 curl http://localhost:8080/actuator/health
 ```
 
@@ -148,6 +151,51 @@ curl http://localhost:8080/actuator/health
 | **Grafana** | http://localhost:3000            | admin / admin              |
 | **MinIO Console** | http://localhost:9001            | minioadmin / minioadmin    |
 | **RabbitMQ** | http://localhost:15672           | guest / guest              |
+
+---
+
+## 🔧 Build & Development
+
+### 📦 **Building the Application**
+
+```bash
+# Clean build (recommended for production)
+./gradlew clean build
+
+# Build without tests (faster for development)
+./gradlew clean build -x test
+
+# Build with specific profile
+./gradlew clean build -Pprofile=production
+
+# Check build output
+ls -la api/build/libs/
+```
+
+### 🐛 **Development Workflow**
+
+```bash
+# 1. Start infrastructure only
+docker-compose up -d db redis rabbitmq minio
+
+# 2. Run application locally
+cd api
+./gradlew bootRun
+
+# 3. Run tests
+./gradlew test
+
+# 4. Build for Docker
+./gradlew clean build -x test
+docker build -f api/Dockerfile -t secure-media-vault:local .
+```
+
+### ⚠️ **Important Notes**
+
+- **Always build** the JAR before Docker build: `./gradlew clean build`
+- **Dockerfile expects** the JAR in `api/build/libs/` directory
+- **Use `-x test`** to skip tests for faster builds during development
+- **Check Java version** matches Docker base image (Java 21)
 
 ---
 
@@ -345,12 +393,25 @@ fun `should handle concurrent uploads efficiently`() {
 ### 🐳 **Docker Deployment**
 
 ```bash
-# Build production image
+# 1. Build the application JAR first
+./gradlew clean build -x test
+
+# 2. Build production Docker image
 docker build -f api/Dockerfile -t secure-media-vault:latest .
 
-# Run with production profile
+# 3. Run with production profile
 docker run -e SPRING_PROFILES_ACTIVE=production \
   -p 8080:8080 secure-media-vault:latest
+```
+
+#### 🔧 **Alternative: Build with Tests**
+
+```bash
+# Build with full test suite
+./gradlew clean build
+
+# Build Docker image
+docker build -f api/Dockerfile -t secure-media-vault:latest .
 ```
 
 ### ☸️ **Kubernetes Deployment**
@@ -393,8 +454,19 @@ jobs:
       - uses: actions/checkout@v4
       - name: Setup JDK 21
         uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
       - name: Run Tests
         run: ./gradlew test
+      - name: Build Application
+        run: ./gradlew clean build
+      - name: Build Docker Image
+        run: docker build -f api/Dockerfile -t secure-media-vault:${{ github.sha }} .
       - name: Security Scan
         uses: github/codeql-action/analyze@v3
 ```
@@ -478,6 +550,64 @@ GET /actuator/prometheus
 
 # Application Info
 GET /actuator/info
+```
+
+---
+
+## 🔧 Troubleshooting
+
+### 🐛 **Common Build Issues**
+
+#### JAR not found during Docker build
+```bash
+# Problem: COPY api/build/libs/*.jar app.jar fails
+# Solution: Build the JAR first
+./gradlew clean build -x test
+docker build -f api/Dockerfile -t secure-media-vault:latest .
+```
+
+#### Out of memory during build
+```bash
+# Problem: Gradle runs out of memory
+# Solution: Increase memory allocation
+export GRADLE_OPTS="-Xmx2g -XX:MaxMetaspaceSize=512m"
+./gradlew clean build
+```
+
+#### Tests failing during build
+```bash
+# Problem: Tests fail in CI/CD environment
+# Solution: Skip tests for Docker build (run them separately)
+./gradlew clean build -x test
+
+# Or run tests with specific profile
+./gradlew test -Dspring.profiles.active=test
+```
+
+#### Docker build context issues
+```bash
+# Problem: Docker build fails with file not found
+# Solution: Build from project root with correct context
+cd secure-media-vault  # Project root
+./gradlew clean build -x test
+docker build -f api/Dockerfile -t secure-media-vault:latest .
+```
+
+### 🔍 **Verification Commands**
+
+```bash
+# Check if JAR was built successfully
+ls -la api/build/libs/
+
+# Check JAR contents
+jar tf api/build/libs/secure-media-vault-*.jar | head -20
+
+# Test JAR directly
+java -jar api/build/libs/secure-media-vault-*.jar --spring.profiles.active=test
+
+# Check Docker image
+docker images | grep secure-media-vault
+docker run --rm secure-media-vault:latest java -version
 ```
 
 ---
