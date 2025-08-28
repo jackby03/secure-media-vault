@@ -648,41 +648,7 @@ Utiliza nuestras plantillas de issues:
 
 ---
 
-## 📈 Roadmap
-
-### 🎯 **Phase 1** ✅ *Completado*
-- [x] Arquitectura base y configuración
-- [x] Autenticación JWT y autorización
-- [x] Upload y gestión básica de archivos
-- [x] Testing suite (127 tests)
-
-### 🎯 **Phase 2** ⏳ *En Progreso*
-- [x] Observabilidad completa (Grafana + Prometheus)
-- [x] CI/CD pipeline automatizado
-- [ ] Testing avanzado (TokenService, CacheService, MinioService)
-- [ ] Optimizaciones de rendimiento
-
-### 🎯 **Phase 3** 📋 *Planificado*
-- [ ] Interface web React/Vue.js
-- [ ] API GraphQL adicional
-- [ ] Procesamiento de imágenes automático
-- [ ] Integración con servicios de ML
-
-### 🎯 **Phase 4** 🔮 *Futuro*
-- [ ] Multi-tenancy support
-- [ ] Advanced analytics dashboard
-- [ ] Mobile apps (iOS/Android)
-- [ ] Blockchain integrity verification
-
----
-
 ## 🏆 Reconocimientos
-
-### 👏 **Contributors**
-
-- **@jackby03** - Project Lead & Backend Developer
-- **Security Team** - Security reviews and penetration testing
-- **DevOps Team** - Infrastructure and deployment automation
 
 ### 🛠️ **Built With**
 
@@ -715,24 +681,6 @@ furnished to do so, subject to the following conditions:
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 ```
-
----
-
-## 📞 Contacto & Soporte
-
-### 💬 **Canales de Comunicación**
-
-- **📧 Email**: support@secure-media-vault.com
-- **💬 Discussions**: [GitHub Discussions](https://github.com/jackby03/secure-media-vault/discussions)
-- **🐛 Issues**: [GitHub Issues](https://github.com/jackby03/secure-media-vault/issues)
-- **🔒 Security**: security@secure-media-vault.com
-
-### 📖 **Recursos Adicionales**
-
-- **📘 Wiki**: [Documentación técnica detallada](https://github.com/jackby03/secure-media-vault/wiki)
-- **🎥 Tutorials**: [Video tutorials y demos](https://youtube.com/secure-media-vault)
-- **📊 Status Page**: [System status y uptime](https://status.secure-media-vault.com)
-
 ---
 
 <div align="center">
