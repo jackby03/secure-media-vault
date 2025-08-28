@@ -52,7 +52,7 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-impl:0.13.0")
     implementation("io.jsonwebtoken:jjwt-jackson:0.13.0")
     // --- Storage ---
-    implementation("io.minio:minio:8.5.7")
+    implementation("io.minio:minio:8.5.17")
     // --- Messaging ---
     implementation("org.springframework.boot:spring-boot-starter-amqp")
     // --- Cache (Redis) ---
