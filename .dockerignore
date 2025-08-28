@@ -1,0 +1,24 @@
+# Temporary build files (but keep api/build/libs for JAR)
+api/.gradle/
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# IDE files
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore
+
+# Git
+.git/
+.gitignore

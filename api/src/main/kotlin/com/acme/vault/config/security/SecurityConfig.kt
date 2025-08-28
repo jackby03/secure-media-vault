@@ -34,6 +34,9 @@ class SecurityConfig {
             .authorizeExchange { exchanges ->
                 exchanges
                     .pathMatchers("/actuator/health").permitAll()
+                    .pathMatchers("/actuator/prometheus").permitAll()
+                    .pathMatchers("/actuator/metrics/**").permitAll()
+                    .pathMatchers("/actuator/info").permitAll()
                     .pathMatchers("/api/processing/**").permitAll()  // Health checks públicos
                     .pathMatchers(HttpMethod.POST, "/auth/login").permitAll()
                     .pathMatchers(HttpMethod.POST, "/auth/refresh").permitAll()

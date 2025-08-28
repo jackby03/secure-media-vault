@@ -1,0 +1,157 @@
+{
+  "id": null,
+  "title": "Secure Media Vault - Application Metrics",
+  "tags": ["spring-boot", "secure-media-vault"],
+  "style": "dark",
+  "timezone": "browser",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Application Health",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "up{job=\"spring-boot-app\"}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": 0},
+              {"color": "green", "value": 1}
+            ]
+          }
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+    },
+    {
+      "id": 2,
+      "title": "HTTP Request Rate",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_count{application=\"secure-media-vault\"}[5m])",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+    },
+    {
+      "id": 3,
+      "title": "HTTP Response Times",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "http_server_requests_seconds{application=\"secure-media-vault\", quantile=\"0.95\"}",
+          "refId": "A",
+          "legendFormat": "95th percentile"
+        },
+        {
+          "expr": "http_server_requests_seconds{application=\"secure-media-vault\", quantile=\"0.50\"}",
+          "refId": "B",
+          "legendFormat": "50th percentile"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+    },
+    {
+      "id": 4,
+      "title": "JVM Memory Usage",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "jvm_memory_used_bytes{application=\"secure-media-vault\"}",
+          "refId": "A",
+          "legendFormat": "Used - {{area}}"
+        },
+        {
+          "expr": "jvm_memory_max_bytes{application=\"secure-media-vault\"}",
+          "refId": "B",
+          "legendFormat": "Max - {{area}}"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+    },
+    {
+      "id": 5,
+      "title": "Database Connection Pool",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "r2dbc_pool_acquired_size{application=\"secure-media-vault\"}",
+          "refId": "A",
+          "legendFormat": "Acquired"
+        },
+        {
+          "expr": "r2dbc_pool_allocated_size{application=\"secure-media-vault\"}",
+          "refId": "B",
+          "legendFormat": "Allocated"
+        },
+        {
+          "expr": "r2dbc_pool_idle_size{application=\"secure-media-vault\"}",
+          "refId": "C",
+          "legendFormat": "Idle"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+    },
+    {
+      "id": 6,
+      "title": "Cache Hit Rate",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "rate(cache_gets_total{application=\"secure-media-vault\",result=\"hit\"}[5m]) / rate(cache_gets_total{application=\"secure-media-vault\"}[5m]) * 100",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": 0},
+              {"color": "yellow", "value": 50},
+              {"color": "green", "value": 80}
+            ]
+          }
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+    },
+    {
+      "id": 7,
+      "title": "File Upload Operations",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_count{application=\"secure-media-vault\",uri=\"/api/files/upload\"}[5m])",
+          "refId": "A",
+          "legendFormat": "Upload Rate"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24}
+    },
+    {
+      "id": 8,
+      "title": "Active WebFlux Connections",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "reactor_netty_connection_provider_active_connections{application=\"secure-media-vault\"}",
+          "refId": "A",
+          "legendFormat": "Active Connections"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24}
+    }
+  ],
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "refresh": "5s"
+}

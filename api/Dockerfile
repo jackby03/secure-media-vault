@@ -1,15 +1,14 @@
 
 
-# Etapa 1: build
-FROM gradle:8.7-jdk21 AS build
-WORKDIR /app
-COPY . .
-WORKDIR /app/api
-RUN gradle build -x test --no-daemon
-
-# Etapa 2: runtime
+# Usar imagen base directamente
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-COPY --from=build /app/api/build/libs/*.jar app.jar
+
+# Copiar el JAR ya construido (desde el contexto api/)
+COPY api/build/libs/*.jar app.jar
+
+# Exponer puerto
 EXPOSE 8080
+
+# Comando de ejecución
 ENTRYPOINT ["java", "-jar", "app.jar"]
