@@ -44,8 +44,8 @@ dependencies {
     implementation("org.postgresql:r2dbc-postgresql")
     runtimeOnly("org.postgresql:postgresql")
     // --- Migraciones de BD ---
-    implementation("org.flywaydb:flyway-core:10.21.0")
-    implementation("org.flywaydb:flyway-database-postgresql:10.21.0")
+    implementation("org.flywaydb:flyway-core:11.11.2")
+    implementation("org.flywaydb:flyway-database-postgresql:11.11.2")
     // --- Security ---
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("io.jsonwebtoken:jjwt-api:0.13.0")
