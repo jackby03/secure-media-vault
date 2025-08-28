@@ -25,7 +25,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "Prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -103,7 +103,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "Prometheus"
           },
           "expr": "rate(http_server_requests_seconds_count{application=\"secure-media-vault\"}[5m])",
           "interval": "",
@@ -117,7 +117,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "Prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -168,7 +168,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "Prometheus"
           },
           "expr": "sum(http_server_requests_seconds_count{application=\"secure-media-vault\"})",
           "interval": "",
@@ -182,7 +182,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "Prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -260,7 +260,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "Prometheus"
           },
           "expr": "histogram_quantile(0.95, rate(http_server_requests_seconds_bucket{application=\"secure-media-vault\"}[5m])) * 1000",
           "interval": "",
@@ -270,7 +270,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "Prometheus"
           },
           "expr": "histogram_quantile(0.50, rate(http_server_requests_seconds_bucket{application=\"secure-media-vault\"}[5m])) * 1000",
           "interval": "",
@@ -284,7 +284,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "Prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -332,7 +332,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "Prometheus"
           },
           "expr": "sum by (status) (http_server_requests_seconds_count{application=\"secure-media-vault\"})",
           "interval": "",
@@ -346,7 +346,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "Prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -424,7 +424,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "Prometheus"
           },
           "expr": "logback_events_total{application=\"secure-media-vault\"}",
           "interval": "",

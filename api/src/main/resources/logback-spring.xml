@@ -12,7 +12,7 @@
     <!-- File appender for application logs -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>/app/logs/application.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>/app/logs/application.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxFileSize>100MB</maxFileSize>
             <maxHistory>30</maxHistory>
@@ -26,7 +26,7 @@
     <!-- Access log appender for HTTP requests -->
     <appender name="ACCESS_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>/app/logs/access.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>/app/logs/access.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxFileSize>100MB</maxFileSize>
             <maxHistory>30</maxHistory>
