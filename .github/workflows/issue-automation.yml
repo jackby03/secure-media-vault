@@ -1,0 +1,107 @@
+name: 🤖 Auto-assign Issues
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  assign-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto-assign based on labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const labels = issue.labels.map(label => label.name);
+            
+            // Define assignees for different types of issues
+            const assignments = {
+              'security': ['security-team'],
+              'critical': ['tech-lead'],
+              'documentation': ['docs-team'],
+              'bug': ['maintainer'],
+              'enhancement': ['product-owner']
+            };
+            
+            // Find matching assignees
+            let assignees = [];
+            for (const label of labels) {
+              if (assignments[label]) {
+                assignees = assignees.concat(assignments[label]);
+              }
+            }
+            
+            // Remove duplicates
+            assignees = [...new Set(assignees)];
+            
+            if (assignees.length > 0) {
+              await github.rest.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                assignees: assignees
+              });
+              
+              console.log(`Assigned issue #${issue.number} to: ${assignees.join(', ')}`);
+            }
+
+  add-to-project:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add issue to project board
+        uses: actions/add-to-project@v0.5.0
+        with:
+          project-url: https://github.com/orgs/acme/projects/1
+          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+
+  label-enhancement:
+    runs-on: ubuntu-latest
+    if: contains(github.event.issue.labels.*.name, 'enhancement')
+    steps:
+      - name: Comment on enhancement
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '👋 Thanks for the feature request! We\'ll review this and add it to our roadmap consideration.'
+            })
+
+  label-bug:
+    runs-on: ubuntu-latest
+    if: contains(github.event.issue.labels.*.name, 'bug')
+    steps:
+      - name: Comment on bug report
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🐛 Thanks for the bug report! We\'ll investigate this issue and get back to you soon.'
+            })
+
+  label-security:
+    runs-on: ubuntu-latest
+    if: contains(github.event.issue.labels.*.name, 'security')
+    steps:
+      - name: Add urgent label to security issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['urgent']
+            });
+            
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🔒 This security issue has been marked as urgent and will be prioritized accordingly.'
+            })

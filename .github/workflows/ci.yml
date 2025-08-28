@@ -1,0 +1,144 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  JAVA_VERSION: '21'
+  GRADLE_VERSION: '8.14'
+
+jobs:
+  test:
+    name: 🧪 Tests & Quality Analysis
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+          
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+          
+      rabbitmq:
+        image: rabbitmq:3-management
+        env:
+          RABBITMQ_DEFAULT_USER: guest
+          RABBITMQ_DEFAULT_PASS: guest
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 30s
+          --health-timeout 30s
+          --health-retries 3
+        ports:
+          - 5672:5672
+          
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+
+    - name: ☕ Set up JDK ${{ env.JAVA_VERSION }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+
+    - name: 🐘 Setup Gradle
+      uses: gradle/gradle-build-action@v3
+      with:
+        gradle-version: ${{ env.GRADLE_VERSION }}
+
+    - name: 🧹 Clean & Validate
+      working-directory: ./api
+      run: ./gradlew clean check
+
+    - name: 🧪 Run Unit Tests
+      working-directory: ./api
+      run: ./gradlew test --parallel --continue
+      env:
+        SPRING_PROFILES_ACTIVE: test
+        SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/testdb
+        SPRING_DATASOURCE_USERNAME: postgres
+        SPRING_DATASOURCE_PASSWORD: postgres
+        SPRING_REDIS_HOST: localhost
+        SPRING_RABBITMQ_HOST: localhost
+
+    - name: 🧪 Run Integration Tests
+      working-directory: ./api
+      run: ./gradlew integrationTest --parallel --continue
+      env:
+        SPRING_PROFILES_ACTIVE: integration
+        SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/testdb
+        SPRING_DATASOURCE_USERNAME: postgres
+        SPRING_DATASOURCE_PASSWORD: postgres
+        SPRING_REDIS_HOST: localhost
+        SPRING_RABBITMQ_HOST: localhost
+
+    - name: 📊 Generate Test Report
+      uses: dorny/test-reporter@v1
+      if: success() || failure()
+      with:
+        name: 🧪 Test Results
+        path: 'api/build/test-results/**/*.xml'
+        reporter: java-junit
+
+    - name: 📈 Code Coverage Report
+      working-directory: ./api
+      run: ./gradlew jacocoTestReport
+
+    - name: 📤 Upload Coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./api/build/reports/jacoco/test/jacocoTestReport.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+    - name: 🔍 Cache SonarCloud packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.sonar/cache
+        key: ${{ runner.os }}-sonar
+        restore-keys: ${{ runner.os }}-sonar
+
+    - name: 🔍 SonarCloud Analysis
+      working-directory: ./api
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        ./gradlew sonar \
+          -Dsonar.projectKey=secure-media-vault \
+          -Dsonar.organization=${{ github.repository_owner }} \
+          -Dsonar.host.url=https://sonarcloud.io
+
+    - name: 📦 Build Application
+      working-directory: ./api
+      run: ./gradlew build -x test
+
+    - name: 📤 Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: jar-artifacts
+        path: api/build/libs/*.jar
+        retention-days: 7

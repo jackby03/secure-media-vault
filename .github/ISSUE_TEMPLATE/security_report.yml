@@ -1,0 +1,144 @@
+name: 🔒 Security Report
+description: Report a security vulnerability
+title: "[SECURITY] "
+labels: ["security", "critical", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ⚠️ **Please do not report security vulnerabilities publicly** ⚠️
+        
+        If this is a critical security issue, please email us directly at: security@acme.com
+        
+        For non-critical security improvements, you can use this template.
+
+  - type: checkboxes
+    id: security-checklist
+    attributes:
+      label: Security Checklist
+      options:
+        - label: This is NOT a critical vulnerability requiring immediate attention
+          required: true
+        - label: I have not disclosed this issue publicly
+          required: true
+        - label: I have searched existing security issues
+          required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity Level
+      description: How severe is this security issue?
+      options:
+        - Low - Information disclosure, minor security improvement
+        - Medium - Requires authentication, limited impact
+        - High - Significant security flaw, user data at risk
+        - Critical - Complete system compromise possible
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Security Category
+      description: What type of security issue is this?
+      options:
+        - Authentication/Authorization
+        - Data validation/sanitization
+        - Cryptography
+        - Network security
+        - File/Upload security
+        - Database security
+        - API security
+        - Dependency vulnerability
+        - Configuration security
+        - Information disclosure
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Security Issue Description
+      description: Describe the security issue
+      placeholder: A clear description of the security vulnerability or concern
+    validations:
+      required: true
+
+  - type: textarea
+    id: attack-vector
+    attributes:
+      label: Attack Vector
+      description: How could this vulnerability be exploited?
+      placeholder: Describe the potential attack vector or exploitation method
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Potential Impact
+      description: What could an attacker achieve?
+      placeholder: Describe the potential impact if this vulnerability were exploited
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this security issue?
+      placeholder: |
+        1. Step one...
+        2. Step two...
+        3. Step three...
+        4. Security issue occurs
+
+  - type: textarea
+    id: poc
+    attributes:
+      label: Proof of Concept
+      description: Include proof of concept (if safe to share)
+      placeholder: |
+        Provide any safe proof of concept code or screenshots.
+        DO NOT include actual exploit code.
+
+  - type: textarea
+    id: mitigation
+    attributes:
+      label: Suggested Mitigation
+      description: Do you have suggestions for fixing this issue?
+      placeholder: Any suggestions for how to address this security issue
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      description: Where was this issue discovered?
+      options:
+        - Development
+        - Testing
+        - Staging
+        - Production
+        - Code review
+        - Security audit
+        - Other
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Any relevant security references
+      placeholder: |
+        - CVE numbers
+        - OWASP references  
+        - Security advisories
+        - Related issues
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Information
+      description: Any other relevant information
+      placeholder: Any additional context that might be helpful for understanding or fixing this security issue

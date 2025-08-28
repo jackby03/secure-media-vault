@@ -1,0 +1,78 @@
+name: 🧹 Stale Issues and PRs
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight
+  workflow_dispatch:
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mark stale issues and PRs
+        uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          
+          # Stale issue configuration
+          stale-issue-message: |
+            👋 This issue has been automatically marked as stale because it has not had recent activity.
+            
+            It will be closed if no further activity occurs within 7 days.
+            
+            If this issue is still relevant, please:
+            - Add a comment to keep it open
+            - Add the "keep-open" label
+            - Update the issue with current information
+            
+            Thank you for your contributions! 🙏
+          
+          close-issue-message: |
+            🔒 This issue has been automatically closed due to inactivity.
+            
+            If you believe this issue is still relevant, please:
+            - Reopen the issue
+            - Provide updated information
+            - Explain why this issue should remain open
+            
+            Thank you! 🙏
+          
+          # Stale PR configuration  
+          stale-pr-message: |
+            👋 This pull request has been automatically marked as stale because it has not had recent activity.
+            
+            It will be closed if no further activity occurs within 7 days.
+            
+            If this PR is still relevant, please:
+            - Rebase with the latest main branch
+            - Address any review comments
+            - Add a comment explaining the current status
+            
+            Thank you for your contribution! 🙏
+          
+          close-pr-message: |
+            🔒 This pull request has been automatically closed due to inactivity.
+            
+            If you would like to continue this work, please:
+            - Reopen the PR
+            - Rebase with the latest main branch
+            - Address any outstanding review comments
+            
+            Thank you! 🙏
+          
+          # Timing configuration
+          days-before-stale: 30
+          days-before-close: 7
+          days-before-pr-close: 7
+          
+          # Labels
+          stale-issue-label: 'stale'
+          stale-pr-label: 'stale'
+          exempt-issue-labels: 'keep-open,security,critical,enhancement,good-first-issue'
+          exempt-pr-labels: 'keep-open,security,critical,work-in-progress'
+          exempt-draft-pr: true
+          
+          # Limits
+          operations-per-run: 30
+          
+          # Debug
+          debug-only: false

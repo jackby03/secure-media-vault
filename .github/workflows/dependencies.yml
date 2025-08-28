@@ -1,0 +1,160 @@
+name: 📦 Dependency Updates
+
+on:
+  schedule:
+    # Check for dependency updates daily at 6:00 AM UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  dependency-review:
+    name: 📦 Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: 📦 Dependency Review
+      uses: actions/dependency-review-action@v4
+      with:
+        fail-on-severity: high
+        allow-licenses: Apache-2.0, MIT, BSD-2-Clause, BSD-3-Clause
+
+  gradle-dependency-submission:
+    name: 📊 Gradle Dependency Submission
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+
+    - name: ☕ Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+
+    - name: 📊 Generate and submit dependency graph
+      uses: gradle/gradle-build-action@v3
+      with:
+        dependency-graph: generate-and-submit
+        build-root-directory: ./api
+
+  update-dependencies:
+    name: 🔄 Update Dependencies
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: ☕ Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+
+    - name: 🔄 Check for Gradle wrapper updates
+      working-directory: ./api
+      run: |
+        ./gradlew wrapper --gradle-version=latest
+        if ! git diff --quiet gradle/wrapper/gradle-wrapper.properties; then
+          echo "gradle_updated=true" >> $GITHUB_ENV
+        fi
+
+    - name: 🔄 Check for plugin updates
+      working-directory: ./api
+      run: |
+        ./gradlew dependencyUpdates
+        if [ -f build/dependencyUpdates/report.txt ]; then
+          echo "Updates available:"
+          cat build/dependencyUpdates/report.txt
+        fi
+
+    - name: 📤 Upload dependency update report
+      uses: actions/upload-artifact@v4
+      with:
+        name: dependency-updates-report
+        path: |
+          api/build/dependencyUpdates/
+          api/build/reports/
+        retention-days: 7
+
+    - name: 🔧 Create Pull Request for Gradle Updates
+      if: env.gradle_updated == 'true'
+      uses: peter-evans/create-pull-request@v6
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: "🔄 Update Gradle wrapper"
+        title: "🔄 Update Gradle wrapper"
+        body: |
+          🔄 **Automated Gradle Wrapper Update**
+          
+          This PR updates the Gradle wrapper to the latest version.
+          
+          **Changes:**
+          - Updated Gradle wrapper
+          
+          **Testing:**
+          - [ ] Build passes
+          - [ ] Tests pass
+          - [ ] No breaking changes
+          
+          *This PR was created automatically by the dependency update workflow.*
+        branch: update/gradle-wrapper
+        delete-branch: true
+
+  security-audit:
+    name: 🔍 Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+
+    - name: ☕ Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+
+    - name: 🔍 Run security audit
+      working-directory: ./api
+      run: |
+        ./gradlew dependencyCheckAnalyze
+        
+    - name: 📤 Upload security audit report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-audit-report
+        path: api/build/reports/dependency-check/
+        retention-days: 30
+
+    - name: 🚨 Fail on high severity vulnerabilities
+      working-directory: ./api
+      run: |
+        if [ -f build/reports/dependency-check/dependency-check-report.xml ]; then
+          high_vulnerabilities=$(grep -c 'severity>High</severity>' build/reports/dependency-check/dependency-check-report.xml || echo "0")
+          critical_vulnerabilities=$(grep -c 'severity>Critical</severity>' build/reports/dependency-check/dependency-check-report.xml || echo "0")
+          
+          echo "High severity vulnerabilities: $high_vulnerabilities"
+          echo "Critical severity vulnerabilities: $critical_vulnerabilities"
+          
+          if [ "$critical_vulnerabilities" -gt "0" ]; then
+            echo "❌ Critical vulnerabilities found!"
+            exit 1
+          fi
+          
+          if [ "$high_vulnerabilities" -gt "0" ]; then
+            echo "⚠️ High severity vulnerabilities found!"
+            echo "Please review and update dependencies"
+          fi
+        fi

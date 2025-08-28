@@ -1,0 +1,130 @@
+name: 📚 Documentation
+description: Suggest improvements to documentation
+title: "[DOCS] "
+labels: ["documentation", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve our documentation! 📚
+        
+        Good documentation is essential for project success.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission checklist
+      options:
+        - label: I have searched existing documentation issues
+          required: true
+        - label: I have read the existing documentation
+          required: true
+
+  - type: dropdown
+    id: doc-type
+    attributes:
+      label: Documentation Type
+      description: What type of documentation needs improvement?
+      options:
+        - README
+        - API Documentation
+        - User Guide
+        - Developer Guide
+        - Installation Instructions
+        - Configuration Guide
+        - Troubleshooting Guide
+        - Code Comments
+        - Architecture Documentation
+        - Security Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Issue Type
+      description: What kind of documentation issue is this?
+      options:
+        - Missing documentation
+        - Incorrect information
+        - Outdated information
+        - Unclear instructions
+        - Missing examples
+        - Poor formatting
+        - Broken links
+        - Translation needed
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-state
+    attributes:
+      label: Current Documentation State
+      description: What is the current state of the documentation?
+      placeholder: Describe what currently exists (or doesn't exist) and what's wrong with it
+    validations:
+      required: true
+
+  - type: textarea
+    id: improvement
+    attributes:
+      label: Suggested Improvement
+      description: What specific improvements would you like to see?
+      placeholder: Describe what should be added, changed, or improved
+    validations:
+      required: true
+
+  - type: textarea
+    id: target-audience
+    attributes:
+      label: Target Audience
+      description: Who would benefit from this documentation improvement?
+      placeholder: |
+        - New users
+        - Experienced users
+        - Developers
+        - System administrators
+        - API consumers
+        - Other: specify
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Examples or References
+      description: Provide examples of good documentation or specific content suggestions
+      placeholder: |
+        - Links to good examples from other projects
+        - Specific content suggestions
+        - Code examples that should be included
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this documentation improvement?
+      options:
+        - Low - Minor improvement
+        - Medium - Would help users
+        - High - Important for usability
+        - Critical - Blocking user adoption
+
+  - type: textarea
+    id: location
+    attributes:
+      label: Documentation Location
+      description: Where should this documentation be located?
+      placeholder: |
+        - Specific file paths
+        - Section names
+        - New file suggestions
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other relevant information
+      placeholder: Screenshots, mockups, or additional context that would help improve the documentation

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 General Questions & Support
+    url: https://github.com/acme/secure-media-vault/discussions
+    about: Ask questions and discuss with the community
+  - name: 🔒 Critical Security Issues
+    url: mailto:security@acme.com
+    about: Report critical security vulnerabilities privately
+  - name: 📖 Documentation
+    url: https://github.com/acme/secure-media-vault/wiki
+    about: Check our documentation and guides
